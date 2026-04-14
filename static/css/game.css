@@ -1,0 +1,97 @@
+* {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body {
+    margin: 0;
+    padding: 20px;
+    background: #2c1810;
+    font-family: 'Georgia', serif;
+    overflow: hidden;
+}
+
+.game-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+canvas {
+    border: 3px solid #8b6914;
+    border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    cursor: grab;
+    background: #d4b896;
+}
+
+canvas:active {
+    cursor: grabbing;
+}
+
+.info-panel {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #ffd700;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    pointer-events: none;
+    z-index: 10;
+    font-family: monospace;
+}
+
+.selected-info {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.controls-hint {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #ccc;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-size: 11px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+#endTurnButton {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: #8b6914;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: Georgia, serif;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background 0.1s ease;
+    z-index: 100;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+#endTurnButton:hover {
+    background: #a8861a;
+}
+
+#endTurnButton:active {
+    background: #6b4f0e;
+}

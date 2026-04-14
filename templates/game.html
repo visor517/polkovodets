@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Полководец - Наполеоновские войны</title>
+    <link rel="stylesheet" href="/static/css/game.css">
+</head>
+
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+
+    <button id="endTurnButton">
+        Завершить ход
+    </button>
+
+    <div class="info-panel" id="infoPanel">
+        Ход: Французская армия | Зум: 1.0x
+    </div>
+
+    <div class="selected-info" id="selectedInfo">
+        Кликните на юнита для выбора
+    </div>
+
+    <div class="controls-hint">
+        🖱️ Правая кнопка + движение = панорамирование<br>
+        🖱️ Колесо мыши = зум<br>
+        🖱️ Левый клик = выбрать/передвинуть
+    </div>
+
+    <script src="/static/js/game.js" type="module"></script>
+</body>
+
+</html>
