@@ -70,12 +70,20 @@ canvas:active {
     z-index: 10;
 }
 
-#endTurnButton {
+.buttons-container {
     position: fixed;
     top: 20px;
     right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 100;
+}
+
+.game-button {
+    width: 200px;
     padding: 10px 20px;
-    background: #8b6914;
+    background: #2c5f2d;
     color: white;
     border: none;
     border-radius: 5px;
@@ -84,14 +92,13 @@ canvas:active {
     font-size: 16px;
     font-weight: bold;
     transition: background 0.1s ease;
-    z-index: 100;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
-#endTurnButton:hover {
-    background: #a8861a;
+.game-button:hover {
+    background: #3d7a3e;
 }
 
-#endTurnButton:active {
-    background: #6b4f0e;
+.game-button:active {
+    background: #1e451f;
 }

@@ -1,18 +1,19 @@
-import { CONFIG, gameState, initTestUnits } from "./state.js";
-import { initCanvas, draw, loadImages, setupCameraControls, canvas, ctx, camera } from "./canvas.js";
+import { CONFIG, gameState } from "./state.js";
+import { initCanvas, draw, loadImages, setupCameraControls, canvas, camera } from "./canvas.js";
 import { UNIT_TYPES, getValidMoves, makeMove } from "./rules.js";
+import { setupButtons } from "./ui.js";
 
 
 // Обработка клика по клетке
 export function handleCellClick(worldX, worldY) {
     // Ищем юнита на этой клетке
-    const clickedUnit = gameState.units.find(u => u.x === worldX && u.y === worldY);
+    const clickedUnit = Object.values(gameState.units).find(u => u.x === worldX && u.y === worldY);
 
     // Если выбран юнит и клик на возможном ходе
     if (gameState.selectedUnitId !== null && gameState.validMoves.some(move => move.x === worldX && move.y === worldY)) {
-        const selectedUnit = gameState.units.find(u => u.id === gameState.selectedUnitId);
+        const selectedUnit = gameState.units[gameState.selectedUnitId];
 
-        if (selectedUnit && selectedUnit.army === gameState.currentTurn) {
+        if (selectedUnit && selectedUnit.army === gameState.activeSide) {
             // Выполняем ход через AJAX
             makeMove(selectedUnit.id, worldX, worldY);
         } else {
@@ -22,7 +23,7 @@ export function handleCellClick(worldX, worldY) {
         }
     }
     // Если клик на своём юните
-    else if (clickedUnit && clickedUnit.army === gameState.currentTurn) {
+    else if (clickedUnit && clickedUnit.army === gameState.activeSide) {
         gameState.selectedUnitId = clickedUnit.id;
         gameState.validMoves = getValidMoves(clickedUnit);
         draw();
@@ -60,8 +61,7 @@ export function handleCellClick(worldX, worldY) {
     }
     // Снимаем выделение
     else {
-        gameState.selectedUnitId = null;
-        gameState.validMoves = [];
+        gameState.clearSelection();
         draw();
         document.getElementById("selectedInfo").innerHTML = "Кликните на юнита для выбора";
     }
@@ -75,10 +75,6 @@ async function init() {
     // Загружаем изображения
     await loadImages();
 
-    // Инициализируем тестовые данные (позже заменим на серверные)
-    gameState.units = initTestUnits();
-    gameState.currentTurn = "russian";
-
     // Настраиваем начальную позицию камеры, чтобы видеть всё поле
     const totalWidth = CONFIG.cellSize * CONFIG.worldWidth;
     const totalHeight = CONFIG.cellSize * CONFIG.worldHeight;
@@ -87,14 +83,8 @@ async function init() {
     camera.offsetY = (canvas.height - totalHeight * camera.zoom) / 2;
 
     setupCameraControls();
+    setupButtons();
     draw();
-    document.getElementById("endTurnButton").addEventListener("click", () => {
-        gameState.currentTurn = gameState.currentTurn === "french" ? "russian" : "french";
-        gameState.selectedUnitId = null;
-        gameState.validMoves = [];
-        draw();
-        document.getElementById("selectedInfo").innerHTML = "Кликните на юнита для выбора";
-    });
 }
 
 // Запуск игры после загрузки страницы

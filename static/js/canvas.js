@@ -136,7 +136,7 @@ export function draw() {
     }
 
     // Рисуем юнитов
-    for (const unit of gameState.units) {
+    for (const unit of Object.values(gameState.units)) {
         if (unit.x >= startCol && unit.x < endCol && unit.y >= startRow && unit.y < endRow) {
             const screenX = unit.x * cellSize + camera.offsetX;
             const screenY = unit.y * cellSize + camera.offsetY;
@@ -146,7 +146,7 @@ export function draw() {
 
     // Обновляем информационную панель
     document.getElementById("infoPanel").innerHTML =
-        `Ход: ${gameState.currentTurn === "french" ? "🇫🇷 Французская армия" : "🇷🇺 Русская армия"} | Зум: ${camera.zoom.toFixed(2)}x`;
+        `Ход ${gameState.turnNumber}: ${gameState.activeSide === "french" ? "Французская армия" : "Русская армия"} | Зум: ${camera.zoom.toFixed(2)}x | ${gameState.gameUid}`;
 }
 
 // Настройка управления камерой

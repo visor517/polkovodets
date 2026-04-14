@@ -64,8 +64,15 @@ export function getValidMoves(unit) {
             const newY = unit.y + dy;
 
             if (newX >= 0 && newX < CONFIG.worldWidth && newY >= 0 && newY < CONFIG.worldHeight) {
-                const friendlyUnit = gameState.units.find(u => u.x === newX && u.y === newY && u.army === unit.army);
-                if (!friendlyUnit) {
+                // Проверяем, есть ли свой юнит на целевой клетке
+                let isFriendly = false;
+                for (const otherUnit of Object.values(gameState.units)) {
+                    if (otherUnit.x === newX && otherUnit.y === newY && otherUnit.army === unit.army) {
+                        isFriendly = true;
+                        break;
+                    }
+                }
+                if (!isFriendly) {
                     moves.push({ x: newX, y: newY });
                 }
             }
@@ -84,11 +91,10 @@ export async function makeMove(unitId, targetX, targetY) {
                 "X-CSRFToken": getCookie("csrftoken")
             },
             body: JSON.stringify({
-                action: "move",
+                game_uid: gameState.gameUid,
                 unit_id: unitId,
                 to_x: targetX,
-                to_y: targetY,
-                game_id: 1
+                to_y: targetY
             })
         });
 

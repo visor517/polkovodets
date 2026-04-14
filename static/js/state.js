@@ -8,34 +8,39 @@ export const CONFIG = {
 };
 
 // Игровое состояние
-export let gameState = {
-    units: [],
-    currentTurn: "russian",
-    selectedUnitId: null,
-    validMoves: []
-};
+export class GameState {
+    constructor(units = {}, firstSide = "russian", secondSide = "french", turnNumber = 1, activeSide = "russian", gameUid = null) {
+        this.units = units;
+        this.firstSide = firstSide;
+        this.secondSide = secondSide;
+        this.turnNumber = turnNumber;
+        this.activeSide = activeSide;
+        this.gameUid = gameUid;
+        this.selectedUnitId = null;
+        this.validMoves = [];
+    }
 
-// Инициализация тестовых юнитов
-export function initTestUnits() {
-    return [
-        // Русские юниты (левая сторона)
-        { id: 1, type: "infantry", army: "russian", x: 0, y: 1},
-        { id: 2, type: "infantry", army: "russian", x: 0, y: 2},
-        { id: 3, type: "cuirassier", army: "russian", x: 0, y: 4},
-        { id: 4, type: "cuirassier", army: "russian", x: 0, y: 5},
-        { id: 5, type: "hussar", army: "russian", x: 0, y: 7},
-        { id: 6, type: "hussar", army: "russian", x: 0, y: 8},
-        { id: 7, type: "artillery", army: "russian", x: 2, y: 5},
+    reset(data) {
+        this.units = data.units;
+        this.firstSide = data.first_side;
+        this.secondSide = data.second_side;
+        this.turnNumber = data.turn_number;
+        this.activeSide = data.active_side;
+        this.gameUid = data.game_uid;
+        this.selectedUnitId = null;
+        this.validMoves = [];
+    }
 
-        // Французские юниты (правая сторона)
-        { id: 11, type: "infantry", army: "french", x: 8, y: 3},
-        { id: 12, type: "infantry", army: "french", x: 8, y: 4},
-        { id: 13, type: "infantry", army: "french", x: 8, y: 5},
-        { id: 14, type: "infantry", army: "french", x: 8, y: 6},
-        { id: 15, type: "infantry", army: "french", x: 9, y: 3},
-        { id: 16, type: "infantry", army: "french", x: 9, y: 4},
-        { id: 17, type: "infantry", army: "french", x: 9, y: 5},
-        { id: 18, type: "infantry", army: "french", x: 9, y: 6},
+    clearSelection() {
+        this.selectedUnitId = null;
+        this.validMoves = [];
+    }
 
-    ];
+    switchTurn() {
+        this.turnNumber += 1;
+        this.activeSide = this.turnNumber % 2 === 1 ? this.firstSide : this.secondSide;
+        this.clearSelection();
+    }
 }
+
+export let gameState = new GameState();
