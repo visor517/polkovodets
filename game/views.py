@@ -113,24 +113,12 @@ def make_move(request):
                     "error_code": "MOVE_OUT_OF_RANGE"
                 })
         else:  # omni
-            if dx + dy > move_range:
+            if max(dx, dy) > move_range:
                 return JsonResponse({
                     "success": False,
                     "error": "Слишком далеко",
                     "error_code": "MOVE_OUT_OF_RANGE"
                 })
-
-        # Проверка, что клетка не занята своим юнитом
-        friendly_unit = Unit.objects.filter(game=game, x=to_x, y=to_y, army=unit.army).first()
-        if friendly_unit:
-            return JsonResponse({
-                "success": False,
-                "error": "Клетка занята своим юнитом",
-                "error_code": "OCCUPIED"
-            })
-
-        # Проверка боя с вражеским юнитом
-        enemy_unit = Unit.objects.filter(game=game, x=to_x, y=to_y).exclude(army=unit.army).first()
 
         events = []
 
@@ -145,12 +133,11 @@ def make_move(request):
                     "error": "Клетка занята своим юнитом",
                     "error_code": "OCCUPIED"
                 })
-
-            target_unit.delete()
             events.append({
                 "type": "destroy",
                 "unit_id": target_unit.id
             })
+            target_unit.delete()
 
         # Перемещаем юнита
         unit.x = to_x
