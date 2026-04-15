@@ -4,9 +4,14 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
 
 from .army import Army, UnitType, UNIT_STATS
 from .models import Game, Unit
+from .serializers import EndTurnSerializer
+import game.api_errors as err
 
 
 def game_view(request):
@@ -139,6 +144,13 @@ def make_move(request):
             })
             target_unit.delete()
 
+            # проверка на конец игры
+            if winner := game.check_winner():
+                events.append({
+                    "type": "game_over",
+                    "winner": winner
+                })
+
         # Перемещаем юнита
         unit.x = to_x
         unit.y = to_y
@@ -161,3 +173,27 @@ def make_move(request):
             "success": False,
             "error": str(e)
         })
+
+
+@api_view(["POST"])
+def end_turn(request):
+    """Завершение хода"""
+    serializer = EndTurnSerializer(data=request.data)
+    if not serializer.is_valid():
+        return err.INVALID_DATA.response(status.HTTP_400_BAD_REQUEST)
+
+    game_uid = serializer.validated_data["game_uid"]
+
+    try:
+        game = Game.objects.get(uid=game_uid)
+    except Game.DoesNotExist:
+        return err.GAME_NOT_FOUND.response(status.HTTP_404_NOT_FOUND)
+
+    game.turn_number += 1
+    game.save()
+
+    return Response({
+        "success": True,
+        "turn_number": game.turn_number,
+        "active_side": game.active_side,
+    })

@@ -30,6 +30,11 @@ export function applyEvents(events) {
                 gameState.activeSide = event.active_side;
                 gameState.clearSelection();
                 break;
+            case "game_over":
+                gameState.isFinished = true;
+                const winnerName = event.winner === "russian" ? "Русская армия" : "Французская армия";
+                alert(`🏆 Игра окончена! Победила ${winnerName}!`);
+                break;
 
             default:
                 console.warn("Неизвестный тип события:", event.type);

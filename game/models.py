@@ -11,11 +11,27 @@ class Game(models.Model):
     first_side = models.CharField(max_length=10, choices=Army.choices, default=Army.RUSSIAN)
     second_side = models.CharField(max_length=10, choices=Army.choices, default=Army.FRENCH)
     is_finished = models.BooleanField(default=False)
+    winner = models.CharField(max_length=10, choices=Army.choices, blank=True, null=True)
 
     @property
     def active_side(self):
         """Кто ходит сейчас"""
         return self.first_side if self.turn_number % 2 == 1 else self.second_side
+
+    def check_winner(self) -> str | None:
+        first_side_units = self.units.filter(army=self.first_side).count()
+        second_side_units = self.units.filter(army=self.second_side).count()
+
+        if first_side_units == 0:
+            self.winner = self.second_side
+            self.is_finished = True
+            self.save()
+            return self.second_side
+        if second_side_units == 0:
+            self.winner = self.first_side
+            self.is_finished = True
+            self.save()
+            return self.first_side
 
 
 class Unit(models.Model):
