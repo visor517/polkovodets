@@ -25,7 +25,7 @@ export const imagePaths = {
     "french_infantry": "/static/images/fr_infantry.png",
     "french_cuirassier": "/static/images/fr_cuirassier.png",
     "french_hussar": "/static/images/fr_hussar.png",
-    "french_artillery": "/static/images/frh_artillery.png",
+    "french_artillery": "/static/images/fr_artillery.png",
     "russian_infantry": "/static/images/rus_infantry.png",
     "russian_cuirassier": "/static/images/rus_cuirassier.png",
     "russian_hussar": "/static/images/rus_hussar.png",

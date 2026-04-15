@@ -1,7 +1,9 @@
+from datetime import timedelta
 import json
 
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from rest_framework.decorators import api_view
@@ -10,7 +12,7 @@ from rest_framework import status
 
 from .army import Army, UnitType, UNIT_STATS
 from .models import Game, Unit
-from .serializers import EndTurnSerializer
+from .serializers import EndTurnSerializer, GameSerializer
 import game.api_errors as err
 
 
@@ -19,10 +21,12 @@ def game_view(request):
     return render(request, "game.html")
 
 
-@csrf_exempt
-@require_http_methods(["POST"])
+@api_view(["POST"])
 def new_game(request):
     """Создание новой игры"""
+    # Временно удаляем игры старше 3 часов
+    Game.objects.filter(created_at__lt=timezone.now() - timedelta(hours=3)).delete()
+
     game = Game.objects.create(
         first_side=Army.RUSSIAN,
         second_side=Army.FRENCH,
@@ -30,48 +34,45 @@ def new_game(request):
 
     # Начальная расстановка юнитов
     initial_units = [
-        {"unit_type": UnitType.INFANTRY, "army": Army.RUSSIAN, "x": 0, "y": 1},
-        {"unit_type": UnitType.INFANTRY, "army": Army.RUSSIAN, "x": 0, "y": 2},
-        {"unit_type": UnitType.CUIRASSIER, "army": Army.RUSSIAN, "x": 0, "y": 4},
-        {"unit_type": UnitType.CUIRASSIER, "army": Army.RUSSIAN, "x": 0, "y": 5},
-        {"unit_type": UnitType.HUSSAR, "army": Army.RUSSIAN, "x": 0, "y": 7},
-        {"unit_type": UnitType.HUSSAR, "army": Army.RUSSIAN, "x": 0, "y": 8},
-        {"unit_type": UnitType.ARTILLERY, "army": Army.RUSSIAN, "x": 2, "y": 5},
+        {"unit_type": UnitType.INFANTRY, "army": Army.RUSSIAN, "x": 1, "y": 3},
+        {"unit_type": UnitType.INFANTRY, "army": Army.RUSSIAN, "x": 1, "y": 4},
+        {"unit_type": UnitType.INFANTRY, "army": Army.RUSSIAN, "x": 1, "y": 5},
+        {"unit_type": UnitType.INFANTRY, "army": Army.RUSSIAN, "x": 1, "y": 6},
+        {"unit_type": UnitType.INFANTRY, "army": Army.RUSSIAN, "x": 2, "y": 3},
+        {"unit_type": UnitType.INFANTRY, "army": Army.RUSSIAN, "x": 2, "y": 4},
+        {"unit_type": UnitType.INFANTRY, "army": Army.RUSSIAN, "x": 2, "y": 5},
+        {"unit_type": UnitType.INFANTRY, "army": Army.RUSSIAN, "x": 2, "y": 6},
+        {"unit_type": UnitType.ARTILLERY, "army": Army.RUSSIAN, "x": 3, "y": 4},
+        {"unit_type": UnitType.ARTILLERY, "army": Army.RUSSIAN, "x": 3, "y": 5},
+        {"unit_type": UnitType.CUIRASSIER, "army": Army.RUSSIAN, "x": 2, "y": 0},
+        {"unit_type": UnitType.CUIRASSIER, "army": Army.RUSSIAN, "x": 2, "y": 1},
+        {"unit_type": UnitType.HUSSAR, "army": Army.RUSSIAN, "x": 2, "y": 8},
+        {"unit_type": UnitType.HUSSAR, "army": Army.RUSSIAN, "x": 2, "y": 9},
 
-        {"unit_type": UnitType.INFANTRY, "army": Army.FRENCH, "x": 8, "y": 3},
-        {"unit_type": UnitType.INFANTRY, "army": Army.FRENCH, "x": 8, "y": 4},
-        {"unit_type": UnitType.INFANTRY, "army": Army.FRENCH, "x": 8, "y": 5},
-        {"unit_type": UnitType.INFANTRY, "army": Army.FRENCH, "x": 8, "y": 6},
+        {"unit_type": UnitType.INFANTRY, "army": Army.FRENCH, "x": 10, "y": 3},
+        {"unit_type": UnitType.INFANTRY, "army": Army.FRENCH, "x": 10, "y": 4},
+        {"unit_type": UnitType.INFANTRY, "army": Army.FRENCH, "x": 10, "y": 5},
+        {"unit_type": UnitType.INFANTRY, "army": Army.FRENCH, "x": 10, "y": 6},
         {"unit_type": UnitType.INFANTRY, "army": Army.FRENCH, "x": 9, "y": 3},
         {"unit_type": UnitType.INFANTRY, "army": Army.FRENCH, "x": 9, "y": 4},
         {"unit_type": UnitType.INFANTRY, "army": Army.FRENCH, "x": 9, "y": 5},
         {"unit_type": UnitType.INFANTRY, "army": Army.FRENCH, "x": 9, "y": 6},
+        {"unit_type": UnitType.ARTILLERY, "army": Army.FRENCH, "x": 8, "y": 4},
+        {"unit_type": UnitType.ARTILLERY, "army": Army.FRENCH, "x": 8, "y": 5},
+        {"unit_type": UnitType.CUIRASSIER, "army": Army.FRENCH, "x": 9, "y": 0},
+        {"unit_type": UnitType.CUIRASSIER, "army": Army.FRENCH, "x": 9, "y": 1},
+        {"unit_type": UnitType.HUSSAR, "army": Army.FRENCH, "x": 9, "y": 8},
+        {"unit_type": UnitType.HUSSAR, "army": Army.FRENCH, "x": 9, "y": 9},
     ]
 
     for unit_data in initial_units:
         Unit.objects.create(game=game, **unit_data)
 
-    # Формируем ответ
-    units_dict = {}
-    for unit in game.units.all():
-        stats = UNIT_STATS[unit.unit_type]
-        units_dict[unit.id] = {
-            "id": unit.id,
-            "type": unit.unit_type,
-            "army": unit.army,
-            "x": unit.x,
-            "y": unit.y,
-            "name": stats["name"],
-        }
+    serializer = GameSerializer(game)
 
-    return JsonResponse({
+    return Response({
         "success": True,
-        "game_uid": str(game.uid),
-        "first_side": game.first_side,
-        "second_side": game.second_side,
-        "turn_number": game.turn_number,
-        "active_side": game.active_side,
-        "units": units_dict,
+        "game": serializer.data
     })
 
 

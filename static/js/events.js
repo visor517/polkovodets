@@ -3,8 +3,8 @@ import {draw} from "./canvas.js";
 
 
 export function handleGameStart(data) {
-    console.log("🎮 Новая игра начата", data.game_uid);
-    gameState.reset(data);
+    console.log("🎮 Новая игра начата", data.game.uid);
+    gameState.reset(data.game);
     draw();
 
     const sideName = data.active_side === "russian" ? "русских" : "французов";

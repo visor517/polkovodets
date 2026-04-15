@@ -1,6 +1,6 @@
 // Конфигурация
 export const CONFIG = {
-    worldWidth: 10,
+    worldWidth: 12,
     worldHeight: 10,
     cellSize: 80,
     minZoom: 0.3,
@@ -20,13 +20,13 @@ export class GameState {
         this.validMoves = [];
     }
 
-    reset(data) {
-        this.units = data.units;
-        this.firstSide = data.first_side;
-        this.secondSide = data.second_side;
-        this.turnNumber = data.turn_number;
-        this.activeSide = data.active_side;
-        this.gameUid = data.game_uid;
+    reset(game) {
+        this.units = game.units;
+        this.firstSide = game.first_side;
+        this.secondSide = game.second_side;
+        this.turnNumber = game.turn_number;
+        this.activeSide = game.active_side;
+        this.gameUid = game.uid;
         this.selectedUnitId = null;
         this.validMoves = [];
     }
