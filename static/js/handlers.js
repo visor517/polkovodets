@@ -12,23 +12,18 @@ export function handleCellClick(worldX, worldY) {
     // Если выбран юнит и клик на возможном ходе
     if (gameState.selectedUnitId !== null) {
         const selectedUnit = gameState.units[gameState.selectedUnitId];
-
-        // Атака по врагу
         if (gameState.validAttacks?.some(attack => attack.x === worldX && attack.y === worldY)) {
             makeAttack(selectedUnit.id, worldX, worldY);
+            return;
         }
-        // Перемещение на пустую клетку
-        else if (gameState.validMoves.some(move => move.x === worldX && move.y === worldY)) {
+        if (gameState.validMoves.some(move => move.x === worldX && move.y === worldY)) {
             makeMove(selectedUnit.id, worldX, worldY);
-        }
-        // Клик мимо — сброс выделения
-        else {
-            gameState.clearSelection();
-            draw();
+            return;
         }
     }
+
     // Если клик на своём юните
-    else if (clickedUnit && clickedUnit.army === gameState.activeSide) {
+    if (clickedUnit && clickedUnit.army === gameState.activeSide) {
         gameState.selectedUnitId = clickedUnit.id;
         gameState.validMoves = getValidMoves(clickedUnit);
         gameState.validAttacks = getValidAttacks(clickedUnit);

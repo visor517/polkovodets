@@ -7,6 +7,13 @@ class EndTurnSerializer(serializers.Serializer):
     game_uid = serializers.UUIDField()
 
 
+class MakeMoveSerializer(serializers.Serializer):
+    game_uid = serializers.UUIDField()
+    unit_id = serializers.IntegerField()
+    to_x = serializers.IntegerField()
+    to_y = serializers.IntegerField()
+
+
 class GameSerializer(serializers.ModelSerializer):
     active_side = serializers.ReadOnlyField()
     units = serializers.SerializerMethodField()

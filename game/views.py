@@ -1,24 +1,185 @@
 from datetime import timedelta
-import json
 
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
 from .army import Army, UnitType, UNIT_STATS
 from .models import Game, Unit
-from .serializers import EndTurnSerializer, GameSerializer
+from .serializers import EndTurnSerializer, GameSerializer, MakeMoveSerializer
 import game.api_errors as err
 
 
 def game_view(request):
     """Главная страница игры"""
     return render(request, "game.html")
+
+
+@api_view(["POST"])
+def end_turn(request):
+    """Завершение хода"""
+    serializer = EndTurnSerializer(data=request.data)
+    if not serializer.is_valid():
+        return err.INVALID_DATA.response(status.HTTP_400_BAD_REQUEST)
+
+    game_uid = serializer.validated_data["game_uid"]
+
+    try:
+        game = Game.objects.get(uid=game_uid)
+    except Game.DoesNotExist:
+        return err.GAME_NOT_FOUND.response(status.HTTP_404_NOT_FOUND)
+
+    game.turn_number += 1
+    game.save()
+
+    return Response({
+        "success": True,
+        "turn_number": game.turn_number,
+        "active_side": game.active_side,
+    })
+
+
+@api_view(["POST"])
+def make_attack(request):
+    serializer = MakeMoveSerializer(data=request.data)  # тот же сериализатор
+    if not serializer.is_valid():
+        return err.INVALID_DATA.response(status.HTTP_400_BAD_REQUEST)
+
+    game_uid = serializer.validated_data["game_uid"]
+    unit_id = serializer.validated_data["unit_id"]
+    to_x = serializer.validated_data["to_x"]
+    to_y = serializer.validated_data["to_y"]
+
+    try:
+        game = Game.objects.get(uid=game_uid)
+        unit = Unit.objects.get(id=unit_id, game=game)
+    except Game.DoesNotExist:
+        return err.GAME_NOT_FOUND.response(status.HTTP_404_NOT_FOUND)
+    except Unit.DoesNotExist:
+        return err.UNIT_NOT_FOUND.response(status.HTTP_404_NOT_FOUND)
+
+    if unit.army != game.active_side:
+        return err.WRONG_TURN.response(status.HTTP_403_FORBIDDEN)
+
+    # Проверяем, есть ли враг на целевой клетке
+    target_unit = Unit.objects.filter(game=game, x=to_x, y=to_y).first()
+    if not target_unit or target_unit.army == unit.army:
+        return err.INVALID_TARGET.response(status.HTTP_400_BAD_REQUEST)
+
+    # Проверка дальности атаки
+    attack_range = UNIT_STATS[unit.unit_type]["attack_range"]
+    attack_pattern = UNIT_STATS[unit.unit_type]["attack_pattern"]
+
+    dx = abs(to_x - unit.x)
+    dy = abs(to_y - unit.y)
+
+    if attack_pattern == "cross":
+        if dx + dy > attack_range or (dx != 0 and dy != 0):
+            return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
+    elif attack_pattern == "diagonal":
+        if dx != dy or dx > attack_range:
+            return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
+    else:  # omni
+        if max(dx, dy) > attack_range:
+            return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
+
+    events = []
+
+    # Уничтожаем врага
+    events.append({"type": "destroy", "unit_id": target_unit.id})
+    target_unit.delete()
+
+    # Проверка конца игры
+    if winner := game.check_winner():
+        events.append({"type": "game_over", "winner": winner})
+        return Response({"success": True, "events": events})
+
+    # Если charges — перемещаем на место врага
+    if UNIT_STATS[unit.unit_type]["charges"]:
+        unit.x = to_x
+        unit.y = to_y
+        unit.save()
+        events.append({"type": "move", "unit_id": unit.id, "to_x": to_x, "to_y": to_y})
+
+    return Response({"success": True, "events": events})
+
+
+@api_view(["POST"])
+def make_move(request):
+    """Обработка хода"""
+    serializer = MakeMoveSerializer(data=request.data)
+    if not serializer.is_valid():
+        return err.INVALID_DATA.response(status.HTTP_400_BAD_REQUEST)
+
+    game_uid = serializer.validated_data["game_uid"]
+    unit_id = serializer.validated_data["unit_id"]
+    to_x = serializer.validated_data["to_x"]
+    to_y = serializer.validated_data["to_y"]
+
+    try:
+        game = Game.objects.get(uid=game_uid)
+        unit = Unit.objects.get(id=unit_id, game=game)
+    except Game.DoesNotExist:
+        return err.GAME_NOT_FOUND.response(status.HTTP_404_NOT_FOUND)
+    except Unit.DoesNotExist:
+        return err.UNIT_NOT_FOUND.response(status.HTTP_404_NOT_FOUND)
+
+    if unit.army != game.active_side:
+        return err.WRONG_TURN.response(status.HTTP_403_FORBIDDEN)
+
+    move_range = UNIT_STATS[unit.unit_type]["move_range"]
+    move_pattern = UNIT_STATS[unit.unit_type]["move_pattern"]
+
+    dx = abs(to_x - unit.x)
+    dy = abs(to_y - unit.y)
+
+    if move_pattern == "cross":
+        if dx + dy > move_range or (dx != 0 and dy != 0):
+            return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
+    elif move_pattern == "diagonal":
+        if dx != dy or dx > move_range:
+            return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
+    else:  # omni
+        if max(dx, dy) > move_range:
+            return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
+
+    events = []
+
+    # Проверяем, есть ли кто-то на целевой клетке
+    target_unit = Unit.objects.filter(game=game, x=to_x, y=to_y).first()
+
+    if target_unit:
+        if target_unit.army == unit.army:
+            return err.CELL_OCCUPIED.response(status.HTTP_400_BAD_REQUEST)
+
+        events.append({
+            "type": "destroy",
+            "unit_id": target_unit.id
+        })
+        target_unit.delete()
+
+        # проверка на конец игры
+        if winner := game.check_winner():
+            events.append({"type": "game_over", "winner": winner})
+
+        if not UNIT_STATS[unit.unit_type]["charges"]:
+            return JsonResponse({"success": True, "events": events})
+
+    # Перемещаем юнита
+    unit.x = to_x
+    unit.y = to_y
+    unit.save()
+
+    events.append({
+        "type": "move",
+        "unit_id": unit.id,
+        "to_x": to_x,
+        "to_y": to_y
+    })
+    return JsonResponse({"success": True, "events": events})
 
 
 @api_view(["POST"])
@@ -73,128 +234,4 @@ def new_game(request):
     return Response({
         "success": True,
         "game": serializer.data
-    })
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def make_move(request):
-    """Обработка хода"""
-    try:
-        data = json.loads(request.body)
-
-        game_uid = data.get("game_uid")
-        unit_id = data.get("unit_id")
-        to_x = data.get("to_x")
-        to_y = data.get("to_y")
-
-        game = Game.objects.get(uid=game_uid)
-        unit = Unit.objects.get(id=unit_id, game=game)
-
-        if unit.army != game.active_side:
-            return JsonResponse({
-                "success": False,
-                "error": "Сейчас не ваш ход",
-                "error_code": "WRONG_TURN"
-            })
-
-        move_range = UNIT_STATS[unit.unit_type]["move_range"]
-        move_pattern = UNIT_STATS[unit.unit_type]["move_pattern"]
-
-        dx = abs(to_x - unit.x)
-        dy = abs(to_y - unit.y)
-
-        if move_pattern == "cross":
-            if dx + dy > move_range or (dx != 0 and dy != 0):
-                return JsonResponse({
-                    "success": False,
-                    "error": "Слишком далеко или не по правилам",
-                    "error_code": "MOVE_OUT_OF_RANGE"
-                })
-        elif move_pattern == "diagonal":
-            if dx != dy or dx > move_range:
-                return JsonResponse({
-                    "success": False,
-                    "error": "Слишком далеко или не по правилам",
-                    "error_code": "MOVE_OUT_OF_RANGE"
-                })
-        else:  # omni
-            if max(dx, dy) > move_range:
-                return JsonResponse({
-                    "success": False,
-                    "error": "Слишком далеко",
-                    "error_code": "MOVE_OUT_OF_RANGE"
-                })
-
-        events = []
-
-        # Проверяем, есть ли кто-то на целевой клетке
-        target_unit = Unit.objects.filter(game=game, x=to_x, y=to_y).first()
-
-        if target_unit:
-            # Если это свой юнит — ошибка
-            if target_unit.army == unit.army:
-                return JsonResponse({
-                    "success": False,
-                    "error": "Клетка занята своим юнитом",
-                    "error_code": "OCCUPIED"
-                })
-            events.append({
-                "type": "destroy",
-                "unit_id": target_unit.id
-            })
-            target_unit.delete()
-
-            # проверка на конец игры
-            if winner := game.check_winner():
-                events.append({
-                    "type": "game_over",
-                    "winner": winner
-                })
-
-        # Перемещаем юнита
-        unit.x = to_x
-        unit.y = to_y
-        unit.save()
-
-        events.append({
-            "type": "move",
-            "unit_id": unit.id,
-            "to_x": to_x,
-            "to_y": to_y
-        })
-
-        return JsonResponse({
-            "success": True,
-            "events": events
-        })
-        
-    except Exception as e:
-        return JsonResponse({
-            "success": False,
-            "error": str(e)
-        })
-
-
-@api_view(["POST"])
-def end_turn(request):
-    """Завершение хода"""
-    serializer = EndTurnSerializer(data=request.data)
-    if not serializer.is_valid():
-        return err.INVALID_DATA.response(status.HTTP_400_BAD_REQUEST)
-
-    game_uid = serializer.validated_data["game_uid"]
-
-    try:
-        game = Game.objects.get(uid=game_uid)
-    except Game.DoesNotExist:
-        return err.GAME_NOT_FOUND.response(status.HTTP_404_NOT_FOUND)
-
-    game.turn_number += 1
-    game.save()
-
-    return Response({
-        "success": True,
-        "turn_number": game.turn_number,
-        "active_side": game.active_side,
     })

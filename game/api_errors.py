@@ -23,12 +23,11 @@ SERVER_ERROR = Error("SERVER_ERROR", "Внутренняя ошибка серв
 # Игра
 GAME_NOT_FOUND = Error("GAME_NOT_FOUND", "Игра не найдена")
 GAME_FINISHED = Error("GAME_FINISHED", "Игра уже завершена")
+UNIT_NOT_FOUND = Error("UNIT_NOT_FOUND", "Юнит не найден")
 
 # Ходы
-WRONG_TURN = Error("WRONG_TURN", "Сейчас не ваш ход")
-MOVE_OUT_OF_RANGE = Error("MOVE_OUT_OF_RANGE", "Слишком далеко")
-MOVE_INVALID_PATTERN = Error("MOVE_INVALID_PATTERN", "Неправильное направление движения")
 CELL_OCCUPIED = Error("CELL_OCCUPIED", "Клетка занята своим юнитом")
-
-# Юниты
-UNIT_NOT_FOUND = Error("UNIT_NOT_FOUND", "Юнит не найден")
+INVALID_PATTERN = Error("INVALID_PATTERN", "Неправильное направление")
+INVALID_TARGET = Error("INVALID_TARGET", "Некорректная цель")
+OUT_OF_RANGE = Error("OUT_OF_RANGE", "Слишком далеко")
+WRONG_TURN = Error("WRONG_TURN", "Сейчас не ваш ход")
