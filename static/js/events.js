@@ -1,15 +1,4 @@
 import { gameState } from "./state.js";
-import {draw} from "./canvas.js";
-
-
-export function handleGameStart(data) {
-    console.log("🎮 Новая игра начата", data.game.uid);
-    gameState.reset(data.game);
-    draw();
-
-    const sideName = data.active_side === "russian" ? "русских" : "французов";
-    document.getElementById("selectedInfo").innerHTML = `Новая игра начата. Ход ${sideName}.`;
-}
 
 
 export function applyEvents(events) {

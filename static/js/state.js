@@ -1,7 +1,7 @@
 // Конфигурация
 export const CONFIG = {
     worldWidth: 12,
-    worldHeight: 10,
+    worldHeight: 12,
     cellSize: 80,
     minZoom: 0.3,
     maxZoom: 2.0
@@ -9,37 +9,34 @@ export const CONFIG = {
 
 // Игровое состояние
 export class GameState {
-    constructor(units = {}, firstSide = "russian", secondSide = "french", turnNumber = 1, activeSide = "russian", gameUid = null) {
-        this.units = units;
+    constructor(gameUid, firstSide, secondSide, turnNumber = 1, activeSide, units = {}) {
+        this.gameUid = gameUid;
         this.firstSide = firstSide;
         this.secondSide = secondSide;
         this.turnNumber = turnNumber;
         this.activeSide = activeSide;
-        this.gameUid = gameUid;
+        this.units = units;
         this.selectedUnitId = null;
         this.validMoves = [];
+        this.validAttacks = [];
     }
 
     reset(game) {
-        this.units = game.units;
+        this.gameUid = game.uid;
         this.firstSide = game.first_side;
         this.secondSide = game.second_side;
         this.turnNumber = game.turn_number;
         this.activeSide = game.active_side;
-        this.gameUid = game.uid;
+        this.units = game.units;
         this.selectedUnitId = null;
         this.validMoves = [];
+        this.validAttacks = [];
     }
 
     clearSelection() {
         this.selectedUnitId = null;
         this.validMoves = [];
-    }
-
-    switchTurn() {
-        this.turnNumber += 1;
-        this.activeSide = this.turnNumber % 2 === 1 ? this.firstSide : this.secondSide;
-        this.clearSelection();
+        this.validAttacks = [];
     }
 }
 

@@ -1,7 +1,8 @@
 import { gameState } from "./state.js";
 import { draw } from "./canvas.js";
-import { handleGameStart } from "./events.js";
+import { handleGameStart } from "./handlers.js";
 import { getCookie } from "./utils.js";
+
 
 export function setupButtons() {
     // Кнопка новой игры

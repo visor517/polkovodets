@@ -1,6 +1,7 @@
 import { CONFIG, gameState } from "./state.js";
-import { handleCellClick } from "./game.js";
+import { handleCellClick } from "./handlers.js";
 import { UNIT_TYPES} from "./rules.js";
+
 
 // Canvas и управление
 export let canvas, ctx;
@@ -21,38 +22,28 @@ export function initCanvas() {
 
 // Загрузка изображений
 export const images = {};
-export const imagePaths = {
-    "french_infantry": "/static/images/fr_infantry.png",
-    "french_cuirassier": "/static/images/fr_cuirassier.png",
-    "french_hussar": "/static/images/fr_hussar.png",
-    "french_artillery": "/static/images/fr_artillery.png",
-    "russian_infantry": "/static/images/rus_infantry.png",
-    "russian_cuirassier": "/static/images/rus_cuirassier.png",
-    "russian_hussar": "/static/images/rus_hussar.png",
-    "russian_artillery": "/static/images/rus_artillery.png"
-};
 
 // Загрузка всех изображений
 export function loadImages() {
     const promises = [];
-    for (const [key, path] of Object.entries(imagePaths)) {
-        const img = new Image();
-        img.src = path;
-        images[key] = img;
-        promises.push(new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = () => {
-                console.warn(`Не удалось загрузить ${path}, будет использован цветной прямоугольник`);
-                resolve();
-            };
-        }));
+    for (const unitType of Object.values(UNIT_TYPES)) {
+        for (const army of ["french", "russian"]) {
+            const path = unitType.images?.[army];
+            if (path && !images[path]) {
+                const img = new Image();
+                img.src = path;
+                images[path] = img;
+                promises.push(new Promise((resolve) => {
+                    img.onload = resolve;
+                    img.onerror = () => {
+                        console.warn(`Не удалось загрузить ${path}`);
+                        resolve();
+                    };
+                }));
+            }
+        }
     }
     return Promise.all(promises);
-}
-
-// Получение ключа изображения
-function getImageKey(unit) {
-    return `${unit.army}_${unit.type}`;
 }
 
 // Рисование клетки
@@ -65,17 +56,25 @@ function drawCell(x, y, screenX, screenY, cellSize) {
     ctx.lineWidth = 1;
     ctx.strokeRect(screenX, screenY, cellSize, cellSize);
 
-    // Подсветка возможных ходов
+    // Подсветка возможных ходов зеленым
     if (gameState.validMoves.some(move => move.x === x && move.y === y)) {
         ctx.fillStyle = "rgba(250,239,47,0.5)";
         ctx.fillRect(screenX, screenY, cellSize, cellSize);
     }
+    // Подсветка атак (красным)
+    if (gameState.validAttacks && gameState.validAttacks.some(attack => attack.x === x && attack.y === y)) {
+        ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+        ctx.fillRect(screenX, screenY, cellSize, cellSize);
+    } else if (gameState.validMoves.some(move => move.x === x && move.y === y)) {
+        ctx.fillStyle = "rgba(250,239,47,0.5)";
+        ctx.fillRect(screenX, screenY, cellSize, cellSize);
+}
 }
 
 // Рисование юнита
 function drawUnit(unit, screenX, screenY, cellSize) {
-    const imageKey = getImageKey(unit);
-    const img = images[imageKey];
+    const imagePath = UNIT_TYPES[unit.type]?.images?.[unit.army];
+    const img = imagePath ? images[imagePath] : null;
 
     // Проверка, выбран ли юнит
     const isSelected = gameState.selectedUnitId === unit.id;
@@ -85,7 +84,7 @@ function drawUnit(unit, screenX, screenY, cellSize) {
         const padding = cellSize * 0.1;
         ctx.drawImage(img, screenX + padding, screenY + padding, cellSize - padding * 2, cellSize - padding * 2);
     } else {
-        // Запасной вариант - цветной прямоугольник с текстом
+        // Запасной вариант - цветной прямоугольник с иконкой
         const color = unit.army === "french" ? "#1a3a8a" : "#8b1a1a";
         ctx.fillStyle = color;
         ctx.fillRect(screenX + 5, screenY + 5, cellSize - 10, cellSize - 10);

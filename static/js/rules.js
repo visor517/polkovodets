@@ -1,7 +1,4 @@
 import { CONFIG, gameState } from "./state.js";
-import { applyEvents } from "./events.js";
-import { getCookie } from "./utils.js";
-import { draw } from "./canvas.js";
 
 
 // Типы юнитов с их характеристиками
@@ -14,7 +11,11 @@ export const UNIT_TYPES = {
         attackRange: 1,
         icon: "⚔️",
         cost: 1,
-        crossCountry: false
+        crossCountry: false,
+        images: {
+            french: "/static/images/fr_infantry.png",
+            russian: "/static/images/rus_infantry.png",
+        }
     },
     hussar: {
         name: "Гусары",
@@ -24,7 +25,11 @@ export const UNIT_TYPES = {
         attackRange: 3,
         icon: "🐎",
         cost: 2,
-        crossCountry: false
+        crossCountry: false,
+        images: {
+            french: "/static/images/fr_hussar.png",
+            russian: "/static/images/rus_hussar.png",
+        }
     },
     cuirassier: {
         name: "Кирасиры",
@@ -34,7 +39,11 @@ export const UNIT_TYPES = {
         attackRange: 4,
         icon: "🏇",
         cost: 4,
-        crossCountry: false
+        crossCountry: false,
+        images: {
+            french: "/static/images/fr_cuirassier.png",
+            russian: "/static/images/rus_cuirassier.png",
+        }
     },
     artillery: {
         name: "Артиллерия",
@@ -44,7 +53,11 @@ export const UNIT_TYPES = {
         attackRange: 5,
         icon: "💣",
         cost: 5,
-        crossCountry: false
+        crossCountry: false,
+        images: {
+            french: "/static/images/fr_artillery.png",
+            russian: "/static/images/rus_artillery.png",
+        }
     }
 };
 
@@ -81,41 +94,36 @@ export function getValidMoves(unit) {
     return moves;
 }
 
-// AJAX запрос на ход
-export async function makeMove(unitId, targetX, targetY) {
-    try {
-        const response = await fetch("/api/move/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCookie("csrftoken")
-            },
-            body: JSON.stringify({
-                game_uid: gameState.gameUid,
-                unit_id: unitId,
-                to_x: targetX,
-                to_y: targetY
-            })
-        });
 
-        const result = await response.json();
+export function getValidAttacks(unit) {
+    const attacks = [];
+    const { attackRange, attackPattern } = UNIT_TYPES[unit.type];
 
-        if (result.success) {
-            applyEvents(result.events);
-            gameState.selectedUnitId = null;
-            gameState.validMoves = [];
-            draw();
-        } else {
-            alert("Ошибка: " + (result.error || "Неизвестная ошибка"));
-            gameState.selectedUnitId = null;
-            gameState.validMoves = [];
-            draw();
+    for (let dx = -attackRange; dx <= attackRange; dx++) {
+        for (let dy = -attackRange; dy <= attackRange; dy++) {
+            if (dx === 0 && dy === 0) continue;
+
+            if (attackPattern === "cross" && dx !== 0 && dy !== 0) continue;
+            if (attackPattern === "diagonal" && Math.abs(dx) !== Math.abs(dy)) continue;
+
+            const newX = unit.x + dx;
+            const newY = unit.y + dy;
+
+            if (newX >= 0 && newX < CONFIG.worldWidth && newY >= 0 && newY < CONFIG.worldHeight) {
+                // Проверяем, есть ли враг на целевой клетке
+                let isEnemy = false;
+                for (const otherUnit of Object.values(gameState.units)) {
+                    if (otherUnit.x === newX && otherUnit.y === newY && otherUnit.army !== unit.army) {
+                        isEnemy = true;
+                        break;
+                    }
+                }
+                if (isEnemy) {
+                    attacks.push({ x: newX, y: newY });
+                }
+            }
         }
-    } catch (error) {
-        console.error("Ошибка:", error);
-        alert("Ошибка соединения с сервером");
-        gameState.selectedUnitId = null;
-        gameState.validMoves = [];
-        draw();
     }
+    return attacks;
 }
+
