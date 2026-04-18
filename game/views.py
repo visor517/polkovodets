@@ -44,7 +44,7 @@ def end_turn(request):
 
 @api_view(["POST"])
 def make_attack(request):
-    serializer = MakeMoveSerializer(data=request.data)  # тот же сериализатор
+    serializer = MakeMoveSerializer(data=request.data)
     if not serializer.is_valid():
         return err.INVALID_DATA.response(status.HTTP_400_BAD_REQUEST)
 
@@ -64,27 +64,41 @@ def make_attack(request):
     if unit.army != game.active_side:
         return err.WRONG_TURN.response(status.HTTP_403_FORBIDDEN)
 
-    # Проверяем, есть ли враг на целевой клетке
+    dx = to_x - unit.x
+    dy = to_y - unit.y
+
+    # Определяем направление и дальность
+    is_diag = abs(dx) == abs(dy)
+    is_cross = dx == 0 or dy == 0
+
+    if not (is_cross or is_diag):
+        return err.INVALID_DIRECTION.response(status.HTTP_400_BAD_REQUEST)
+
+    if is_cross:
+        max_range = UNIT_STATS[unit.unit_type]["attack"]["cross"]
+        step_x = 0 if dx == 0 else (1 if dx > 0 else -1)
+        step_y = 0 if dy == 0 else (1 if dy > 0 else -1)
+    else:  # is_diag
+        max_range = UNIT_STATS[unit.unit_type]["attack"]["diag"]
+        step_x = 1 if dx > 0 else -1
+        step_y = 1 if dy > 0 else -1
+
+    distance = max(abs(dx), abs(dy))
+
+    if distance > max_range:
+        return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
+
+    # Проверяем путь до цели (не включая цель)
+    for step in range(1, distance):
+        check_x = unit.x + step_x * step
+        check_y = unit.y + step_y * step
+        if Unit.objects.filter(game=game, x=check_x, y=check_y).exists():
+            return err.PATH_BLOCKED.response(status.HTTP_400_BAD_REQUEST)
+
+    # Проверяем цель
     target_unit = Unit.objects.filter(game=game, x=to_x, y=to_y).first()
     if not target_unit or target_unit.army == unit.army:
         return err.INVALID_TARGET.response(status.HTTP_400_BAD_REQUEST)
-
-    # Проверка дальности атаки
-    attack_range = UNIT_STATS[unit.unit_type]["attack_range"]
-    attack_pattern = UNIT_STATS[unit.unit_type]["attack_pattern"]
-
-    dx = abs(to_x - unit.x)
-    dy = abs(to_y - unit.y)
-
-    if attack_pattern == "cross":
-        if dx + dy > attack_range or (dx != 0 and dy != 0):
-            return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
-    elif attack_pattern == "diagonal":
-        if dx != dy or dx > attack_range:
-            return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
-    else:  # omni
-        if max(dx, dy) > attack_range:
-            return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
 
     events = []
 
@@ -97,7 +111,7 @@ def make_attack(request):
         events.append({"type": "game_over", "winner": winner})
         return Response({"success": True, "events": events})
 
-    # Если charges — перемещаем на место врага
+    # Если юнит charges перемещаем на место врага
     if UNIT_STATS[unit.unit_type]["charges"]:
         unit.x = to_x
         unit.y = to_y
@@ -130,56 +144,48 @@ def make_move(request):
     if unit.army != game.active_side:
         return err.WRONG_TURN.response(status.HTTP_403_FORBIDDEN)
 
-    move_range = UNIT_STATS[unit.unit_type]["move_range"]
-    move_pattern = UNIT_STATS[unit.unit_type]["move_pattern"]
+    dx = to_x - unit.x
+    dy = to_y - unit.y
 
-    dx = abs(to_x - unit.x)
-    dy = abs(to_y - unit.y)
+    is_diag = abs(dx) == abs(dy)
+    is_cross = dx == 0 or dy == 0
 
-    if move_pattern == "cross":
-        if dx + dy > move_range or (dx != 0 and dy != 0):
-            return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
-    elif move_pattern == "diagonal":
-        if dx != dy or dx > move_range:
-            return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
-    else:  # omni
-        if max(dx, dy) > move_range:
-            return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
+    if not (is_cross or is_diag):
+        return err.INVALID_DIRECTION.response(status.HTTP_400_BAD_REQUEST)
 
-    events = []
+    if is_cross:
+        max_range = UNIT_STATS[unit.unit_type]["move"]["cross"]
+        step_x = 0 if dx == 0 else (1 if dx > 0 else -1)
+        step_y = 0 if dy == 0 else (1 if dy > 0 else -1)
+    else:  # is_diag
+        max_range = UNIT_STATS[unit.unit_type]["move"]["diag"]
+        step_x = 1 if dx > 0 else -1
+        step_y = 1 if dy > 0 else -1
 
-    # Проверяем, есть ли кто-то на целевой клетке
-    target_unit = Unit.objects.filter(game=game, x=to_x, y=to_y).first()
+    distance = max(abs(dx), abs(dy))
+    if distance > max_range:
+        return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
 
-    if target_unit:
-        if target_unit.army == unit.army:
-            return err.CELL_OCCUPIED.response(status.HTTP_400_BAD_REQUEST)
+    # Проверяем, что путь свободен
+    for step in range(1, distance + 1):
+        check_x = unit.x + step_x * step
+        check_y = unit.y + step_y * step
 
-        events.append({
-            "type": "destroy",
-            "unit_id": target_unit.id
-        })
-        target_unit.delete()
+        if blocker_unit := Unit.objects.filter(game=game, x=check_x, y=check_y).first():
+            if blocker_unit.army == unit.army or step < distance:
+                return err.PATH_BLOCKED.response(status.HTTP_400_BAD_REQUEST)
 
-        # проверка на конец игры
-        if winner := game.check_winner():
-            events.append({"type": "game_over", "winner": winner})
-
-        if not UNIT_STATS[unit.unit_type]["charges"]:
-            return JsonResponse({"success": True, "events": events})
-
-    # Перемещаем юнита
     unit.x = to_x
     unit.y = to_y
     unit.save()
 
-    events.append({
+    events = [{
         "type": "move",
         "unit_id": unit.id,
         "to_x": to_x,
         "to_y": to_y
-    })
-    return JsonResponse({"success": True, "events": events})
+    }]
+    return Response({"success": True, "events": events})
 
 
 @api_view(["POST"])
@@ -207,8 +213,8 @@ def new_game(request):
         {"unit_type": "artillery", "army": Army.RUSSIAN, "x": 3, "y": 6},
         {"unit_type": "cuirassier", "army": Army.RUSSIAN, "x": 2, "y": 1},
         {"unit_type": "cuirassier", "army": Army.RUSSIAN, "x": 2, "y": 2},
-        {"unit_type": "hussar", "army": Army.RUSSIAN, "x": 2, "y": 9},
-        {"unit_type": "hussar", "army": Army.RUSSIAN, "x": 2, "y": 10},
+        {"unit_type": "dragoon", "army": Army.RUSSIAN, "x": 2, "y": 9},
+        {"unit_type": "dragoon", "army": Army.RUSSIAN, "x": 2, "y": 10},
 
         {"unit_type": "infantry", "army": Army.FRENCH, "x": 10, "y": 4},
         {"unit_type": "infantry", "army": Army.FRENCH, "x": 10, "y": 5},
@@ -218,7 +224,7 @@ def new_game(request):
         {"unit_type": "infantry", "army": Army.FRENCH, "x": 9, "y": 5},
         {"unit_type": "infantry", "army": Army.FRENCH, "x": 9, "y": 6},
         {"unit_type": "infantry", "army": Army.FRENCH, "x": 9, "y": 7},
-        {"unit_type": "artillery", "army": Army.FRENCH, "x": 8, "y": 5},
+        {"unit_type": "horse_artillery", "army": Army.FRENCH, "x": 8, "y": 5},
         {"unit_type": "artillery", "army": Army.FRENCH, "x": 8, "y": 6},
         {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 9, "y": 1},
         {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 9, "y": 2},

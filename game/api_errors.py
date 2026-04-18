@@ -27,7 +27,8 @@ UNIT_NOT_FOUND = Error("UNIT_NOT_FOUND", "Юнит не найден")
 
 # Ходы
 CELL_OCCUPIED = Error("CELL_OCCUPIED", "Клетка занята своим юнитом")
-INVALID_PATTERN = Error("INVALID_PATTERN", "Неправильное направление")
+INVALID_DIRECTION = Error("INVALID_DIRECTION", "Неправильный ход")
 INVALID_TARGET = Error("INVALID_TARGET", "Некорректная цель")
 OUT_OF_RANGE = Error("OUT_OF_RANGE", "Слишком далеко")
+PATH_BLOCKED = Error("PATH_BLOCKED", "Ход блокирован")
 WRONG_TURN = Error("WRONG_TURN", "Сейчас не ваш ход")

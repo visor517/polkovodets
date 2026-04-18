@@ -14,32 +14,27 @@ export async function initUnitStats() {
 // Получение возможных ходов для юнита
 export function getValidMoves(unit) {
     const moves = [];
-    const { move_range, move_pattern } = UNIT_TYPES[unit.type];
+    const unitType = UNIT_TYPES[unit.type];
+    if (!unitType) return moves;
+    const maxCross = unitType.move.cross;
+    const maxDiag = unitType.move.diag;
 
-    for (let dx = -move_range; dx <= move_range; dx++) {
-        for (let dy = -move_range; dy <= move_range; dy++) {
-            if (dx === 0 && dy === 0) continue;
+    // 8 направлений: 4 крестовых + 4 диагональных
+    const directions = [
+        [1, 0, maxCross], [-1, 0, maxCross], [0, 1, maxCross], [0, -1, maxCross],
+        [1, 1, maxDiag], [1, -1, maxDiag], [-1, 1, maxDiag], [-1, -1, maxDiag]
+    ];
+    for (const [dx, dy, maxRange] of directions) {
+        for (let step = 1; step <= maxRange; step++) {
+            const newX = unit.x + dx * step;
+            const newY = unit.y + dy * step;
 
-            if (move_pattern === "cross" && dx !== 0 && dy !== 0) continue;
-            if (move_pattern === "diagonal" && Math.abs(dx) !== Math.abs(dy)) continue;
-            if (move_pattern === "omni" && dx !== 0 && dy !== 0 && Math.abs(dx) !== Math.abs(dy)) continue;
+            if (newX < 0 || newX >= CONFIG.worldWidth || newY < 0 || newY >= CONFIG.worldHeight) break;
 
-            const newX = unit.x + dx;
-            const newY = unit.y + dy;
+            const targetUnit = Object.values(gameState.units).find(u => u.x === newX && u.y === newY);
+            if (targetUnit) break;  // любой юнит блокирует
 
-            if (newX >= 0 && newX < CONFIG.worldWidth && newY >= 0 && newY < CONFIG.worldHeight) {
-                // Проверяем, есть ли свой юнит на целевой клетке
-                let isFriendly = false;
-                for (const otherUnit of Object.values(gameState.units)) {
-                    if (otherUnit.x === newX && otherUnit.y === newY && otherUnit.army === unit.army) {
-                        isFriendly = true;
-                        break;
-                    }
-                }
-                if (!isFriendly) {
-                    moves.push({ x: newX, y: newY });
-                }
-            }
+            moves.push({ x: newX, y: newY });
         }
     }
     return moves;
@@ -48,34 +43,32 @@ export function getValidMoves(unit) {
 
 export function getValidAttacks(unit) {
     const attacks = [];
-    const { attack_range, attack_pattern } = UNIT_TYPES[unit.type];
+    const unitType = UNIT_TYPES[unit.type];
+    if (!unitType) return attacks;
+    const maxCross = unitType.attack.cross;
+    const maxDiag = unitType.attack.diag;
 
-    for (let dx = -attack_range; dx <= attack_range; dx++) {
-        for (let dy = -attack_range; dy <= attack_range; dy++) {
-            if (dx === 0 && dy === 0) continue;
+    // 8 направлений: 4 крестовых + 4 диагональных
+    const directions = [
+        [1, 0, maxCross], [-1, 0, maxCross], [0, 1, maxCross], [0, -1, maxCross],
+        [1, 1, maxDiag], [1, -1, maxDiag], [-1, 1, maxDiag], [-1, -1, maxDiag]
+    ];
+    for (const [dx, dy, maxRange] of directions) {
+        for (let step = 1; step <= maxRange; step++) {
+            const newX = unit.x + dx * step;
+            const newY = unit.y + dy * step;
 
-            if (attack_pattern === "cross" && dx !== 0 && dy !== 0) continue;
-            if (attack_pattern === "diagonal" && Math.abs(dx) !== Math.abs(dy)) continue;
-            if (attack_pattern === "omni" && dx !== 0 && dy !== 0 && Math.abs(dx) !== Math.abs(dy)) continue;
+            if (newX < 0 || newX >= CONFIG.worldWidth || newY < 0 || newY >= CONFIG.worldHeight) break;
 
-            const newX = unit.x + dx;
-            const newY = unit.y + dy;
+            const targetUnit = Object.values(gameState.units).find(u => u.x === newX && u.y === newY);
 
-            if (newX >= 0 && newX < CONFIG.worldWidth && newY >= 0 && newY < CONFIG.worldHeight) {
-                // Проверяем, есть ли враг на целевой клетке
-                let isEnemy = false;
-                for (const otherUnit of Object.values(gameState.units)) {
-                    if (otherUnit.x === newX && otherUnit.y === newY && otherUnit.army !== unit.army) {
-                        isEnemy = true;
-                        break;
-                    }
+            if (targetUnit) {
+                if (targetUnit.army !== unit.army) {
+                    attacks.push({ x: newX, y: newY });  // враг — цель для атаки
                 }
-                if (isEnemy) {
-                    attacks.push({ x: newX, y: newY });
-                }
+                break;  // любой юнит (свой или чужой) блокирует дальнейший путь
             }
         }
     }
     return attacks;
 }
-
