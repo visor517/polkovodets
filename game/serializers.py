@@ -1,17 +1,45 @@
 from rest_framework import serializers
 
-from .models import Game
+from . import exceptions as err
+from .models import Game, Unit
 
 
 class EndTurnSerializer(serializers.Serializer):
     game_uid = serializers.UUIDField()
 
+    def validate(self, data):
+        try:
+            game = Game.objects.get(uid=data["game_uid"])
+        except Game.DoesNotExist:
+            raise serializers.ValidationError("Игра не найдена")
 
-class MakeMoveSerializer(serializers.Serializer):
+        data["game"] = game
+        return data
+
+
+class UnitActionSerializer(serializers.Serializer):
     game_uid = serializers.UUIDField()
     unit_id = serializers.IntegerField()
     to_x = serializers.IntegerField()
     to_y = serializers.IntegerField()
+
+    def validate(self, data):
+        try:
+            game = Game.objects.get(uid=data["game_uid"])
+        except Game.DoesNotExist:
+            raise err.GameNotFound()
+
+        try:
+            unit = Unit.objects.get(id=data["unit_id"], game=game)
+        except Unit.DoesNotExist:
+            raise err.UnitNotFound()
+
+        if unit.army != game.active_side:
+            raise err.WrongTurn()
+
+        data["game"] = game
+        data["unit"] = unit
+        return data
 
 
 class GameSerializer(serializers.ModelSerializer):

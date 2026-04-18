@@ -1,16 +1,14 @@
 from datetime import timedelta
 
 from django.shortcuts import render
-from django.http import JsonResponse
 from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
 
+from . import exceptions as err
 from .army import Army, UNIT_STATS
 from .models import Game, Unit
-from .serializers import EndTurnSerializer, GameSerializer, MakeMoveSerializer
-import game.api_errors as err
+from .serializers import EndTurnSerializer, GameSerializer, UnitActionSerializer
 
 
 def game_view(request):
@@ -22,15 +20,9 @@ def game_view(request):
 def end_turn(request):
     """Завершение хода"""
     serializer = EndTurnSerializer(data=request.data)
-    if not serializer.is_valid():
-        return err.INVALID_DATA.response(status.HTTP_400_BAD_REQUEST)
+    serializer.is_valid(raise_exception=True)
 
-    game_uid = serializer.validated_data["game_uid"]
-
-    try:
-        game = Game.objects.get(uid=game_uid)
-    except Game.DoesNotExist:
-        return err.GAME_NOT_FOUND.response(status.HTTP_404_NOT_FOUND)
+    game = serializer.validated_data["game"]
 
     game.turn_number += 1
     game.save()
@@ -44,25 +36,13 @@ def end_turn(request):
 
 @api_view(["POST"])
 def make_attack(request):
-    serializer = MakeMoveSerializer(data=request.data)
-    if not serializer.is_valid():
-        return err.INVALID_DATA.response(status.HTTP_400_BAD_REQUEST)
+    serializer = UnitActionSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
 
-    game_uid = serializer.validated_data["game_uid"]
-    unit_id = serializer.validated_data["unit_id"]
+    game = serializer.validated_data["game"]
+    unit = serializer.validated_data["unit"]
     to_x = serializer.validated_data["to_x"]
     to_y = serializer.validated_data["to_y"]
-
-    try:
-        game = Game.objects.get(uid=game_uid)
-        unit = Unit.objects.get(id=unit_id, game=game)
-    except Game.DoesNotExist:
-        return err.GAME_NOT_FOUND.response(status.HTTP_404_NOT_FOUND)
-    except Unit.DoesNotExist:
-        return err.UNIT_NOT_FOUND.response(status.HTTP_404_NOT_FOUND)
-
-    if unit.army != game.active_side:
-        return err.WRONG_TURN.response(status.HTTP_403_FORBIDDEN)
 
     dx = to_x - unit.x
     dy = to_y - unit.y
@@ -72,7 +52,7 @@ def make_attack(request):
     is_cross = dx == 0 or dy == 0
 
     if not (is_cross or is_diag):
-        return err.INVALID_DIRECTION.response(status.HTTP_400_BAD_REQUEST)
+        raise err.InvalidDirection
 
     if is_cross:
         max_range = UNIT_STATS[unit.unit_type]["attack"]["cross"]
@@ -86,19 +66,19 @@ def make_attack(request):
     distance = max(abs(dx), abs(dy))
 
     if distance > max_range:
-        return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
+        raise err.OutOfRange
 
     # Проверяем путь до цели (не включая цель)
     for step in range(1, distance):
         check_x = unit.x + step_x * step
         check_y = unit.y + step_y * step
         if Unit.objects.filter(game=game, x=check_x, y=check_y).exists():
-            return err.PATH_BLOCKED.response(status.HTTP_400_BAD_REQUEST)
+            raise err.PathBlocked
 
     # Проверяем цель
     target_unit = Unit.objects.filter(game=game, x=to_x, y=to_y).first()
     if not target_unit or target_unit.army == unit.army:
-        return err.INVALID_TARGET.response(status.HTTP_400_BAD_REQUEST)
+        return err.InvalidTarget
 
     events = []
 
@@ -124,25 +104,13 @@ def make_attack(request):
 @api_view(["POST"])
 def make_move(request):
     """Обработка хода"""
-    serializer = MakeMoveSerializer(data=request.data)
-    if not serializer.is_valid():
-        return err.INVALID_DATA.response(status.HTTP_400_BAD_REQUEST)
+    serializer = UnitActionSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
 
-    game_uid = serializer.validated_data["game_uid"]
-    unit_id = serializer.validated_data["unit_id"]
+    game = serializer.validated_data["game"]
+    unit = serializer.validated_data["unit"]
     to_x = serializer.validated_data["to_x"]
     to_y = serializer.validated_data["to_y"]
-
-    try:
-        game = Game.objects.get(uid=game_uid)
-        unit = Unit.objects.get(id=unit_id, game=game)
-    except Game.DoesNotExist:
-        return err.GAME_NOT_FOUND.response(status.HTTP_404_NOT_FOUND)
-    except Unit.DoesNotExist:
-        return err.UNIT_NOT_FOUND.response(status.HTTP_404_NOT_FOUND)
-
-    if unit.army != game.active_side:
-        return err.WRONG_TURN.response(status.HTTP_403_FORBIDDEN)
 
     dx = to_x - unit.x
     dy = to_y - unit.y
@@ -151,7 +119,7 @@ def make_move(request):
     is_cross = dx == 0 or dy == 0
 
     if not (is_cross or is_diag):
-        return err.INVALID_DIRECTION.response(status.HTTP_400_BAD_REQUEST)
+        raise err.InvalidDirection
 
     if is_cross:
         max_range = UNIT_STATS[unit.unit_type]["move"]["cross"]
@@ -164,7 +132,7 @@ def make_move(request):
 
     distance = max(abs(dx), abs(dy))
     if distance > max_range:
-        return err.OUT_OF_RANGE.response(status.HTTP_400_BAD_REQUEST)
+        raise err.OutOfRange
 
     # Проверяем, что путь свободен
     for step in range(1, distance + 1):
@@ -173,7 +141,7 @@ def make_move(request):
 
         if blocker_unit := Unit.objects.filter(game=game, x=check_x, y=check_y).first():
             if blocker_unit.army == unit.army or step < distance:
-                return err.PATH_BLOCKED.response(status.HTTP_400_BAD_REQUEST)
+                raise err.PathBlocked
 
     unit.x = to_x
     unit.y = to_y
