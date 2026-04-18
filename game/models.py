@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 
-from .army import Army, UnitType
+from .army import Army, UNIT_TYPE_CHOICES
 
 
 class Game(models.Model):
@@ -36,7 +36,7 @@ class Game(models.Model):
 
 class Unit(models.Model):
     game = models.ForeignKey("Game", on_delete=models.CASCADE, related_name="units")
-    unit_type = models.CharField(max_length=20, choices=UnitType.choices)
+    unit_type = models.CharField(max_length=20, choices=UNIT_TYPE_CHOICES)
     army = models.CharField(max_length=10, choices=Army.choices)
     x = models.IntegerField()
     y = models.IntegerField()

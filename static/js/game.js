@@ -1,10 +1,15 @@
 import { CONFIG } from "./state.js";
 import { initCanvas, draw, loadImages, setupCameraControls, canvas, camera } from "./canvas.js";
+import { initUnitStats } from "./rules.js";
 import { setupButtons } from "./ui.js";
 
 
 // Инициализация игры
 async function init() {
+
+    // Загружаем типы юнитов
+    await initUnitStats();
+
     // Инициируем canvas
     initCanvas();
 

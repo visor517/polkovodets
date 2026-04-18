@@ -69,3 +69,8 @@ export async function makeMove(unitId, targetX, targetY) {
         draw();
     }
 }
+
+export async function loadUnitStats() {
+    const response = await fetch("/api/unit_stats/");
+    return await response.json();
+}

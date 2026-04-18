@@ -1,77 +1,28 @@
+import { loadUnitStats } from "./api.js";
 import { CONFIG, gameState } from "./state.js";
 
 
-// Типы юнитов с их характеристиками
-export const UNIT_TYPES = {
-    infantry: {
-        name: "Линейная пехота",
-        movePattern: "omni",
-        moveRange: 1,
-        attackPattern: "diagonal",
-        attackRange: 1,
-        icon: "⚔️",
-        cost: 1,
-        crossCountry: false,
-        images: {
-            french: "/static/images/fr_infantry.png",
-            russian: "/static/images/rus_infantry.png",
-        }
-    },
-    hussar: {
-        name: "Гусары",
-        movePattern: "diagonal",
-        moveRange: 3,
-        attackPattern: "diagonal",
-        attackRange: 3,
-        icon: "🐎",
-        cost: 2,
-        crossCountry: false,
-        images: {
-            french: "/static/images/fr_hussar.png",
-            russian: "/static/images/rus_hussar.png",
-        }
-    },
-    cuirassier: {
-        name: "Кирасиры",
-        movePattern: "cross",
-        moveRange: 4,
-        attackPattern: "cross",
-        attackRange: 4,
-        icon: "🏇",
-        cost: 4,
-        crossCountry: false,
-        images: {
-            french: "/static/images/fr_cuirassier.png",
-            russian: "/static/images/rus_cuirassier.png",
-        }
-    },
-    artillery: {
-        name: "Артиллерия",
-        movePattern: "omni",
-        moveRange: 1,
-        attackPattern: "omni",
-        attackRange: 5,
-        icon: "💣",
-        cost: 5,
-        crossCountry: false,
-        images: {
-            french: "/static/images/fr_artillery.png",
-            russian: "/static/images/rus_artillery.png",
-        }
-    }
-};
+// типы юнитов загружаются с бека
+export let UNIT_TYPES = {};
+
+export async function initUnitStats() {
+    UNIT_TYPES = await loadUnitStats();
+    return UNIT_TYPES;
+}
+
 
 // Получение возможных ходов для юнита
 export function getValidMoves(unit) {
     const moves = [];
-    const { moveRange, movePattern } = UNIT_TYPES[unit.type];
+    const { move_range, move_pattern } = UNIT_TYPES[unit.type];
 
-    for (let dx = -moveRange; dx <= moveRange; dx++) {
-        for (let dy = -moveRange; dy <= moveRange; dy++) {
+    for (let dx = -move_range; dx <= move_range; dx++) {
+        for (let dy = -move_range; dy <= move_range; dy++) {
             if (dx === 0 && dy === 0) continue;
 
-            if (movePattern === "cross" && dx !== 0 && dy !== 0) continue;
-            if (movePattern === "diagonal" && Math.abs(dx) !== Math.abs(dy)) continue;
+            if (move_pattern === "cross" && dx !== 0 && dy !== 0) continue;
+            if (move_pattern === "diagonal" && Math.abs(dx) !== Math.abs(dy)) continue;
+            if (move_pattern === "omni" && dx !== 0 && dy !== 0 && Math.abs(dx) !== Math.abs(dy)) continue;
 
             const newX = unit.x + dx;
             const newY = unit.y + dy;
@@ -97,14 +48,15 @@ export function getValidMoves(unit) {
 
 export function getValidAttacks(unit) {
     const attacks = [];
-    const { attackRange, attackPattern } = UNIT_TYPES[unit.type];
+    const { attack_range, attack_pattern } = UNIT_TYPES[unit.type];
 
-    for (let dx = -attackRange; dx <= attackRange; dx++) {
-        for (let dy = -attackRange; dy <= attackRange; dy++) {
+    for (let dx = -attack_range; dx <= attack_range; dx++) {
+        for (let dy = -attack_range; dy <= attack_range; dy++) {
             if (dx === 0 && dy === 0) continue;
 
-            if (attackPattern === "cross" && dx !== 0 && dy !== 0) continue;
-            if (attackPattern === "diagonal" && Math.abs(dx) !== Math.abs(dy)) continue;
+            if (attack_pattern === "cross" && dx !== 0 && dy !== 0) continue;
+            if (attack_pattern === "diagonal" && Math.abs(dx) !== Math.abs(dy)) continue;
+            if (attack_pattern === "omni" && dx !== 0 && dy !== 0 && Math.abs(dx) !== Math.abs(dy)) continue;
 
             const newX = unit.x + dx;
             const newY = unit.y + dy;
