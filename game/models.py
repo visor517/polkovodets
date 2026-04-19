@@ -1,7 +1,13 @@
 import uuid
 from django.db import models
 
-from .army import Army, UNIT_TYPE_CHOICES
+from .army import UNIT_TYPE_CHOICES
+
+
+class Army(models.TextChoices):
+    FRENCH = "french", "Франция"
+    RUSSIAN = "russian", "Россия"
+    AUSTRIAN = "austrian", "Австрия"
 
 
 class Game(models.Model):

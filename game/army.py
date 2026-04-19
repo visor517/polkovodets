@@ -1,12 +1,3 @@
-from django.db import models
-
-
-class Army(models.TextChoices):
-    FRENCH = "french", "Франция"
-    RUSSIAN = "russian", "Россия"
-    AUSTRIAN = "austrian", "Австрия"
-
-
 UNIT_STATS = {
     "infantry": {
         "name": "Линейная пехота",

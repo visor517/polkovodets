@@ -6,8 +6,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from . import exceptions as err
-from .army import Army, UNIT_STATS
-from .models import Game, Unit
+from .army import UNIT_STATS
+from .models import Army, Game, Unit
 from .serializers import EndTurnSerializer, GameSerializer, UnitActionSerializer
 
 
