@@ -15,6 +15,7 @@ export class GameState {
         this.secondSide = secondSide;
         this.turnNumber = turnNumber;
         this.activeSide = activeSide;
+        /** @type {Object.<number, Unit>} */
         this.units = units;
         this.selectedUnitId = null;
         this.validMoves = [];

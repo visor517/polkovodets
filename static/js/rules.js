@@ -14,7 +14,7 @@ export async function initUnitStats() {
 // Получение возможных ходов для юнита
 export function getValidMoves(unit) {
     const moves = [];
-    const unitType = UNIT_TYPES[unit.type];
+    const unitType = UNIT_TYPES[unit.unit_type];
     if (!unitType) return moves;
     const maxCross = unitType.move.cross;
     const maxDiag = unitType.move.diag;
@@ -43,7 +43,7 @@ export function getValidMoves(unit) {
 
 export function getValidAttacks(unit) {
     const attacks = [];
-    const unitType = UNIT_TYPES[unit.type];
+    const unitType = UNIT_TYPES[unit.unit_type];
     if (!unitType) return attacks;
     const maxCross = unitType.attack.cross;
     const maxDiag = unitType.attack.diag;

@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from . import exceptions as err
 from .army import UNIT_STATS
 from .models import Army, Game, Unit
-from .serializers import EndTurnSerializer, GameSerializer, UnitActionSerializer
+from . import serializers
 
 
 def game_view(request):
@@ -19,7 +19,7 @@ def game_view(request):
 @api_view(["POST"])
 def end_turn(request):
     """Завершение хода"""
-    serializer = EndTurnSerializer(data=request.data)
+    serializer = serializers.EndTurnSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
     game = serializer.validated_data["game"]
@@ -36,7 +36,7 @@ def end_turn(request):
 
 @api_view(["POST"])
 def make_attack(request):
-    serializer = UnitActionSerializer(data=request.data)
+    serializer = serializers.UnitActionSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
     game = serializer.validated_data["game"]
@@ -95,8 +95,10 @@ def make_attack(request):
     if UNIT_STATS[unit.unit_type]["charges"]:
         unit.x = to_x
         unit.y = to_y
-        unit.save()
-        events.append({"type": "move", "unit_id": unit.id, "to_x": to_x, "to_y": to_y})
+    unit.last_used_turn = game.turn_number
+    unit.save()
+    unit_serializer = serializers.UnitSerializer(unit)
+    events.append({"type": "unit_updated", "unit": unit_serializer.data})
 
     return Response({"success": True, "events": events})
 
@@ -104,7 +106,7 @@ def make_attack(request):
 @api_view(["POST"])
 def make_move(request):
     """Обработка хода"""
-    serializer = UnitActionSerializer(data=request.data)
+    serializer = serializers.UnitActionSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
     game = serializer.validated_data["game"]
@@ -145,14 +147,11 @@ def make_move(request):
 
     unit.x = to_x
     unit.y = to_y
+    unit.last_used_turn = game.turn_number
     unit.save()
 
-    events = [{
-        "type": "move",
-        "unit_id": unit.id,
-        "to_x": to_x,
-        "to_y": to_y
-    }]
+    unit_serializer = serializers.UnitSerializer(unit)
+    events = [{"type": "unit_updated", "unit": unit_serializer.data}]
     return Response({"success": True, "events": events})
 
 
@@ -203,12 +202,9 @@ def new_game(request):
     for unit_data in initial_units:
         Unit.objects.create(game=game, **unit_data)
 
-    serializer = GameSerializer(game)
+    serializer = serializers.GameSerializer(game)
 
-    return Response({
-        "success": True,
-        "game": serializer.data
-    })
+    return Response({"success": True, "game": serializer.data})
 
 
 @api_view(["GET"])

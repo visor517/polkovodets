@@ -4,12 +4,10 @@ import { gameState } from "./state.js";
 export function applyEvents(events) {
     for (const event of events) {
         switch (event.type) {
-            case "move":
-                const unit = gameState.units[event.unit_id];
-                if (unit) {
-                    unit.x = event.to_x;
-                    unit.y = event.to_y;
-                }
+            case "unit_updated":
+                console.log("unit_before:", gameState.units[event.unit.id]);
+                gameState.units[event.unit.id] = event.unit
+                console.log("unit_after:", gameState.units[event.unit.id]);
                 break;
             case "destroy":
                 delete gameState.units[event.unit_id];

@@ -46,3 +46,4 @@ class Unit(models.Model):
     army = models.CharField(max_length=10, choices=Army.choices)
     x = models.IntegerField()
     y = models.IntegerField()
+    last_used_turn = models.IntegerField(default=0)

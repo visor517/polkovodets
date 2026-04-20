@@ -73,11 +73,12 @@ function drawCell(x, y, screenX, screenY, cellSize) {
 
 // Рисование юнита
 function drawUnit(unit, screenX, screenY, cellSize) {
-    const imagePath = UNIT_TYPES[unit.type]?.images?.[unit.army];
+    const imagePath = UNIT_TYPES[unit.unit_type]?.images?.[unit.army];
     const img = imagePath ? images[imagePath] : null;
 
-    // Проверка, выбран ли юнит
-    const isSelected = gameState.selectedUnitId === unit.id;
+    // Использованный юнит прозрачнее
+    const isUsed = (unit.last_used_turn === gameState.turnNumber && unit.army === gameState.activeSide);
+    if (isUsed) ctx.globalAlpha = 0.7;
 
     if (img && img.complete && img.naturalWidth > 0) {
         // Рисуем PNG картинку
@@ -94,12 +95,14 @@ function drawUnit(unit, screenX, screenY, cellSize) {
         ctx.font = `${Math.floor(cellSize * 0.4)}px Arial`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        let icon = UNIT_TYPES[unit.type].icon;
+        let icon = UNIT_TYPES[unit.unit_type].icon;
         ctx.fillText(icon, screenX + cellSize / 2, screenY + cellSize / 2);
     }
 
+    if (isUsed) ctx.globalAlpha = 1.0;  // сброс
+
     // Рамка выделения
-    if (isSelected) {
+    if (gameState.selectedUnitId === unit.id) {
         ctx.strokeStyle = "#ffd700";
         ctx.lineWidth = 4;
         ctx.strokeRect(screenX + 2, screenY + 2, cellSize - 4, cellSize - 4);

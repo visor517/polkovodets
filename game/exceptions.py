@@ -14,6 +14,12 @@ class UnitNotFound(APIException):
     default_code = "unit_not_found"
 
 
+class UnitAlreadyActed(APIException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    default_detail = "Этот юнит уже действовал в этом ходу"
+    default_code = "unit_already_acted"
+
+
 class WrongTurn(APIException):
     status_code = status.HTTP_403_FORBIDDEN
     default_detail = "Сейчас не ваш ход"

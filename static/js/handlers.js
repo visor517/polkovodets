@@ -7,6 +7,7 @@ import { getValidAttacks, getValidMoves, UNIT_TYPES } from "./rules.js";
 // Обработка клика по клетке
 export function handleCellClick(worldX, worldY) {
     // Ищем юнита на этой клетке
+    /** @type {Unit} */
     const clickedUnit = Object.values(gameState.units).find(u => u.x === worldX && u.y === worldY);
 
     // Если выбран юнит и клик на возможном ходе
@@ -24,35 +25,47 @@ export function handleCellClick(worldX, worldY) {
 
     // Если клик на своём юните
     if (clickedUnit && clickedUnit.army === gameState.activeSide) {
+        // Проверяем, не действовал ли юнит в этом ходу
+        if (clickedUnit.last_used_turn === gameState.turnNumber) {
+            document.getElementById("selectedInfo").innerHTML =
+                `${UNIT_TYPES[clickedUnit.unit_type].name} уже действовал в этом ходу`;
+            return;
+        }
+
         gameState.selectedUnitId = clickedUnit.id;
         gameState.validMoves = getValidMoves(clickedUnit);
         gameState.validAttacks = getValidAttacks(clickedUnit);
         draw();
 
-        const unitInfo = UNIT_TYPES[clickedUnit.type];
+        /** @type {UnitTypeStats} */
+        const unitInfo = UNIT_TYPES[clickedUnit.unit_type];
 
         // Формируем текст для атаки
         let attackText = "";
-        if (unitInfo.attackPattern === "omni") {
-            attackText = `во все стороны на ${unitInfo.attackRange}`;
-        } else if (unitInfo.attackPattern === "cross") {
-            attackText = `вертикаль/горизонталь на ${unitInfo.attackRange}`;
-        } else if (unitInfo.attackPattern === "diagonal") {
-            attackText = `диагональ на ${unitInfo.attackRange}`;
+        if (unitInfo.attack.cross > 0 && unitInfo.attack.diag > 0) {
+            attackText = `крест: ${unitInfo.attack.cross}, диагональ: ${unitInfo.attack.diag}`;
+        } else if (unitInfo.attack.cross > 0) {
+            attackText = `вертикаль/горизонталь на ${unitInfo.attack.cross}`;
+        } else if (unitInfo.attack.diag > 0) {
+            attackText = `диагональ на ${unitInfo.attack.diag}`;
+        } else {
+            attackText = "не может атаковать";
         }
 
         // Формируем текст для движения
         let moveText = "";
-        if (unitInfo.movePattern === "omni") {
-            moveText = `во все стороны на ${unitInfo.moveRange}`;
-        } else if (unitInfo.movePattern === "cross") {
-            moveText = `вертикаль/горизонталь на ${unitInfo.moveRange}`;
-        } else if (unitInfo.movePattern === "diagonal") {
-            moveText = `диагональ на ${unitInfo.moveRange}`;
+        if (unitInfo.move.cross > 0 && unitInfo.move.diag > 0) {
+            moveText = `крест: ${unitInfo.move.cross}, диагональ: ${unitInfo.move.diag}`;
+        } else if (unitInfo.move.cross > 0) {
+            moveText = `вертикаль/горизонталь на ${unitInfo.move.cross}`;
+        } else if (unitInfo.move.diag > 0) {
+            moveText = `диагональ на ${unitInfo.move.diag}`;
+        } else {
+            moveText = "не может ходить";
         }
 
         // Проходимость препятствий
-        const crossCountryText = unitInfo.crossCountry ? "✅ может" : "❌ не может";
+        const crossCountryText = unitInfo.cross_country ? "✅ может" : "❌ не может";
 
         document.getElementById("selectedInfo").innerHTML =
             `Выбран: ${unitInfo.name}<br>` +
@@ -74,7 +87,7 @@ export function handleGameStart(data) {
     console.log("🎮 Новая игра начата", data.game.uid);
     gameState.reset(data.game);
     draw();
-
-    const sideName = data.active_side === "russian" ? "русских" : "французов";
+    console.log(data.game)
+    const sideName = data.game.active_side === "russian" ? "русских" : "французов";
     document.getElementById("selectedInfo").innerHTML = `Новая игра начата. Ход ${sideName}.`;
 }

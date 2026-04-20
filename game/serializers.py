@@ -37,9 +37,18 @@ class UnitActionSerializer(serializers.Serializer):
         if unit.army != game.active_side:
             raise err.WrongTurn()
 
+        if unit.last_used_turn == game.turn_number:
+            raise err.UnitAlreadyActed()
+
         data["game"] = game
         data["unit"] = unit
         return data
+
+
+class UnitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Unit
+        fields = "__all__"
 
 
 class GameSerializer(serializers.ModelSerializer):
@@ -51,16 +60,14 @@ class GameSerializer(serializers.ModelSerializer):
         fields = ["uid", "first_side", "second_side", "turn_number", "active_side", "is_finished", "units"]
 
     def get_units(self, obj):
-        from .army import UNIT_STATS
         units_dict = {}
         for unit in obj.units.all():
-            stats = UNIT_STATS[unit.unit_type]
             units_dict[unit.id] = {
                 "id": unit.id,
-                "type": unit.unit_type,
+                "unit_type": unit.unit_type,
                 "army": unit.army,
                 "x": unit.x,
                 "y": unit.y,
-                "name": stats["name"],
+                "last_used_turn": unit.last_used_turn,
             }
         return units_dict
