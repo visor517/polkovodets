@@ -83,11 +83,11 @@ export function handleCellClick(worldX, worldY) {
 
 
 // Обработка старта игры
-export function handleGameStart(data) {
-    console.log("🎮 Новая игра начата", data.game.uid);
-    gameState.reset(data.game);
+export function handleGameStart(game) {
+    console.log("🎮 Новая игра начата", game.uid);
+    gameState.reset(game);
     draw();
-    console.log(data.game)
-    const sideName = data.game.active_side === "russian" ? "русских" : "французов";
+    console.log(game)
+    const sideName = game.active_side === "russian" ? "русских" : "французов";
     document.getElementById("selectedInfo").innerHTML = `Новая игра начата. Ход ${sideName}.`;
 }

@@ -1,5 +1,7 @@
 import { CONFIG } from "./state.js";
 import { initCanvas, draw, loadImages, setupCameraControls, canvas, camera } from "./canvas.js";
+import { loadCurrentGame } from "./api.js";
+import { handleGameStart } from "./handlers.js";
 import { initUnitStats } from "./rules.js";
 import { setupButtons } from "./ui.js";
 
@@ -15,6 +17,12 @@ async function init() {
 
     // Загружаем изображения
     await loadImages();
+
+    // Загружаем текущую игру из сессии
+    const result = await loadCurrentGame();
+    if (result.success) {
+        handleGameStart(result.game);
+    }
 
     // Настраиваем начальную позицию камеры, чтобы видеть всё поле
     const totalWidth = CONFIG.cellSize * CONFIG.worldWidth;

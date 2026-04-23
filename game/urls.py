@@ -9,4 +9,5 @@ urlpatterns = [
     path("api/move/", views.make_move, name="make_move"),
     path("api/new_game/", views.new_game, name="new_game"),
     path("api/unit_stats/", views.get_unit_stats, name="unit_stats"),
+    path("api/current_game/", views.current_game, name="current_game"),
 ]

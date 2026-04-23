@@ -8,6 +8,12 @@ class GameNotFound(APIException):
     default_code = "game_not_found"
 
 
+class NoGameUidInSession(APIException):
+    status_code = status.HTTP_404_NOT_FOUND
+    default_detail = "Нет игры в сессии"
+    default_code = "no_game_uid_in_session"
+
+
 class UnitNotFound(APIException):
     status_code = status.HTTP_404_NOT_FOUND
     default_detail = "Юнит не найден"

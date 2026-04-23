@@ -1,7 +1,7 @@
+import { createNewGame, endTurn } from "./api.js";
 import { gameState } from "./state.js";
 import { draw } from "./canvas.js";
 import { handleGameStart } from "./handlers.js";
-import { getCookie } from "./utils.js";
 
 
 export function setupButtons() {
@@ -10,18 +10,9 @@ export function setupButtons() {
     if (newGameButton) {
         newGameButton.addEventListener("click", async () => {
             try {
-                const response = await fetch("/api/new_game/", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken")
-                    }
-                });
-
-                const result = await response.json();
-
+                const result = await createNewGame();
                 if (result.success) {
-                    handleGameStart(result);
+                    handleGameStart(result.game);
                 } else {
                     alert("Ошибка создания игры");
                 }
@@ -37,21 +28,9 @@ export function setupButtons() {
     if (endTurnButton) {
         endTurnButton.addEventListener("click", async () => {
             try {
-                const response = await fetch("/api/end_turn/", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken")
-                    },
-                    body: JSON.stringify({
-                        game_uid: gameState.gameUid
-                    })
-                });
-
-                const result = await response.json();
+                const result = await endTurn();
 
                 if (result.success) {
-                    // Обновляем состояние игры
                     gameState.turnNumber = result.turn_number;
                     gameState.activeSide = result.active_side;
                     gameState.clearSelection();

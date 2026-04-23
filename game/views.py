@@ -202,8 +202,10 @@ def new_game(request):
     for unit_data in initial_units:
         Unit.objects.create(game=game, **unit_data)
 
-    serializer = serializers.GameSerializer(game)
+    # Сохраняем uid игры в сессию
+    request.session["game_uid"] = str(game.uid)
 
+    serializer = serializers.GameSerializer(game)
     return Response({"success": True, "game": serializer.data})
 
 
@@ -211,3 +213,23 @@ def new_game(request):
 def get_unit_stats(request):
     """Возвращает характеристики всех типов юнитов"""
     return Response(UNIT_STATS)
+
+
+@api_view(["GET"])
+def current_game(request):
+    """Возвращает текущую игру из сессии"""
+    game_uid = request.session.get("game_uid")
+    if not game_uid:
+        raise err.NoGameUidInSession
+
+    try:
+        game = Game.objects.get(uid=game_uid)
+    except Game.DoesNotExist:
+        del request.session["game_uid"]
+        raise err.GameNotFound
+
+    serializer = serializers.GameSerializer(game)
+    return Response({
+        "success": True,
+        "game": serializer.data
+    })

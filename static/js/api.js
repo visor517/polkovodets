@@ -4,7 +4,6 @@ import {applyEvents} from "./events.js";
 import {draw} from "./canvas.js";
 
 
-// AJAX запрос на атаку
 export async function makeAttack(unitId, targetX, targetY) {
     try {
         const response = await fetch("/api/attack/", {
@@ -37,7 +36,6 @@ export async function makeAttack(unitId, targetX, targetY) {
     }
 }
 
-// AJAX запрос на ход
 export async function makeMove(unitId, targetX, targetY) {
     try {
         const response = await fetch("/api/move/", {
@@ -72,5 +70,35 @@ export async function makeMove(unitId, targetX, targetY) {
 
 export async function loadUnitStats() {
     const response = await fetch("/api/unit_stats/");
+    return await response.json();
+}
+
+export async function loadCurrentGame() {
+    const response = await fetch("/api/current_game/");
+    return await response.json();
+}
+
+export async function createNewGame() {
+    const response = await fetch("/api/new_game/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken")
+        }
+    });
+    return await response.json();
+}
+
+export async function endTurn() {
+    const response = await fetch("/api/end_turn/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken")
+        },
+        body: JSON.stringify({
+            game_uid: gameState.gameUid
+        })
+    });
     return await response.json();
 }
