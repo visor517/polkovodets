@@ -87,7 +87,6 @@ export function handleGameStart(game) {
     console.log("🎮 Новая игра начата", game.uid);
     gameState.reset(game);
     draw();
-    console.log(game)
     const sideName = game.active_side === "russian" ? "русских" : "французов";
-    document.getElementById("selectedInfo").innerHTML = `Новая игра начата. Ход ${sideName}.`;
+    document.getElementById("selectedInfo").innerHTML = `Новая игра начата. Ход ${sideName}`;
 }

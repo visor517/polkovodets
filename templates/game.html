@@ -1,38 +1,104 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Полководец - Наполеоновские войны</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/game.css">
 </head>
-
 <body>
-    <div class="game-container">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <!-- Верхнее меню (заглушка) -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">⚔️ ПОЛКОВОДЕЦ</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="#">Правила</a>
+                <a class="nav-link" href="#">Формирование</a>
+                <a class="nav-link" href="#">Профиль</a>
+                <a class="nav-link" href="#">Выйти</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <!-- Canvas (9 колонок) -->
+            <div class="col-9">
+                <div class="game-container">
+                    <canvas id="gameCanvas"></canvas>
+                </div>
+                <div class="d-flex justify-content-center gap-2 mt-3">
+                    <button id="newGameButton" class="btn btn-primary">Новая игра</button>
+                    <button id="endTurnButton" class="btn btn-primary">Завершить ход</button>
+                </div>
+            </div>
+
+            <!-- Правая панель (3 колонки) -->
+            <div class="col-3">
+                <!-- Инфоблок -->
+                <div class="info-block">
+                    <h5>ИНФОРМАЦИЯ</h5>
+                    <div id="turnInfo"></div>
+                    <div>Номер хода: <span id="turnNumberInfo"></span></div>
+                    <div>Счёт: <span id="scoreInfo">0 : 0</span></div>
+                    <hr>
+                    <div id="selectedInfo">Кликните на юнита для выбора</div>
+                </div>
+
+                <!-- Вкладки (лог, чат, правила) -->
+                <ul class="nav nav-tabs mt-3" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="log-tab" data-bs-toggle="tab" data-bs-target="#log" type="button" role="tab">📜 Лог боя</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button" role="tab">💬 Чат</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="rules-tab" data-bs-toggle="tab" data-bs-target="#rules" type="button" role="tab">📖 Правила</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane fade show active" id="log" role="tabpanel">
+                        <div id="battleLog" style="height: 300px; overflow-y: auto; font-size: 12px;">
+                            <div>Добро пожаловать в игру!</div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="chat" role="tabpanel">
+                        <div id="chatLog" style="height: 260px; overflow-y: auto; font-size: 12px;">
+                            <div>Чат пока не работает</div>
+                        </div>
+                        <div class="input-group mt-2">
+                            <input type="text" class="form-control form-control-sm" placeholder="Введите сообщение..." disabled>
+                            <button class="btn btn-sm btn-secondary" disabled>Отправить</button>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="rules" role="tabpanel">
+                        <div style="height: 300px; overflow-y: auto; font-size: 12px;">
+                            <h6>Основные правила:</h6>
+                            <ul>
+                                <li>Пехота: ходит на 1, бьёт по диагонали</li>
+                                <li>Гусары: ход/атака по диагонали на 3</li>
+                                <li>Кирасиры: ход/атака по прямой на 4</li>
+                                <li>Артиллерия: ход на 1, стрельба на 5 по прямой</li>
+                                <li>Драгуны: ход крест 1, диагональ 2</li>
+                                <li>Каждый юнит — 1 действие за ход</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Подсказки управления -->
+                <div class="controls-hint mt-3">
+                    🖱️ Правая кнопка + движение = панорамирование<br>
+                    🖱️ Колесо мыши = зум<br>
+                    🖱️ Левый клик = выбрать/передвинуть
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="buttons-container">
-        <button id="newGameButton" class="game-button">Новая игра</button>
-        <button id="endTurnButton" class="game-button">Завершить ход</button>
-    </div>
-
-    <div class="info-panel" id="infoPanel">
-        Ход: Французская армия | Зум: 1.0x
-    </div>
-
-    <div class="selected-info" id="selectedInfo">
-        Кликните на юнита для выбора
-    </div>
-
-    <div class="controls-hint">
-        🖱️ Правая кнопка + движение = панорамирование<br>
-        🖱️ Колесо мыши = зум<br>
-        🖱️ Левый клик = выбрать/передвинуть
-    </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/static/js/game.js" type="module"></script>
 </body>
-
 </html>

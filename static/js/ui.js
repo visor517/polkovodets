@@ -35,9 +35,6 @@ export function setupButtons() {
                     gameState.activeSide = result.active_side;
                     gameState.clearSelection();
                     draw();
-
-                    const sideName = gameState.activeSide === "russian" ? "русских" : "французов";
-                    document.getElementById("selectedInfo").innerHTML = `Ход передан. Ход ${sideName}.`;
                 } else {
                     alert("Ошибка: " + (result.error || "Неизвестная ошибка"));
                 }
