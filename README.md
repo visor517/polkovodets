@@ -1,6 +1,6 @@
 # Полководец
 Военная браузерная игра, посвящённая эпохе Наполеоновских войн.
-<img width="670" height="560" alt="001" src="https://github.com/user-attachments/assets/fd7ca179-68ee-41fc-a69a-3626a691bfed" />
+<img width="1147" height="888" alt="001" src="https://github.com/user-attachments/assets/6cac7a45-52ce-4e2b-884c-6d465c36f7df" />
 
 ## Описание
 Игрок управляет армией (французской, русской или австрийской) на тактическом поле боя.  
