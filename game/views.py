@@ -27,10 +27,14 @@ def end_turn(request):
     game.turn_number += 1
     game.save()
 
-    return Response({
-        "success": True,
+    events = [{
+        "type": "turn_change",
         "turn_number": game.turn_number,
         "active_side": game.active_side,
+    }]
+    return Response({
+        "success": True,
+        "events": events,
     })
 
 

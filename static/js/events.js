@@ -1,13 +1,12 @@
 import { gameState } from "./state.js";
+import { draw } from "./canvas.js";
 
 
 export function applyEvents(events) {
     for (const event of events) {
         switch (event.type) {
             case "unit_updated":
-                console.log("unit_before:", gameState.units[event.unit.id]);
                 gameState.units[event.unit.id] = event.unit
-                console.log("unit_after:", gameState.units[event.unit.id]);
                 break;
             case "destroy":
                 delete gameState.units[event.unit_id];
@@ -16,6 +15,8 @@ export function applyEvents(events) {
                 gameState.turnNumber = event.turn_number;
                 gameState.activeSide = event.active_side;
                 gameState.clearSelection();
+                // Очищаем сообщение о выбранном юните
+                document.getElementById("selectedInfo").innerHTML = "Кликните на юнита для выбора";
                 break;
             case "game_over":
                 gameState.isFinished = true;
@@ -27,4 +28,5 @@ export function applyEvents(events) {
                 console.warn("Неизвестный тип события:", event.type);
         }
     }
+    draw();
 }

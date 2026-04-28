@@ -1,7 +1,7 @@
 import { createNewGame, endTurn } from "./api.js";
 import { gameState } from "./state.js";
-import { draw } from "./canvas.js";
 import { handleGameStart } from "./handlers.js";
+import { applyEvents } from "./events.js";
 
 
 export function setupButtons() {
@@ -31,10 +31,7 @@ export function setupButtons() {
                 const result = await endTurn();
 
                 if (result.success) {
-                    gameState.turnNumber = result.turn_number;
-                    gameState.activeSide = result.active_side;
-                    gameState.clearSelection();
-                    draw();
+                    applyEvents(result.events);
                 } else {
                     alert("Ошибка: " + (result.error || "Неизвестная ошибка"));
                 }

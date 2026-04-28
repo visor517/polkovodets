@@ -1,6 +1,6 @@
 import { CONFIG, gameState } from "./state.js";
 import { handleCellClick } from "./handlers.js";
-import { UNIT_TYPES} from "./rules.js";
+import { UNIT_TYPES } from "./rules.js";
 
 
 // Canvas и управление
@@ -17,7 +17,7 @@ export let camera = {
 function resizeCanvas() {
     const container = canvas.parentElement;
     const width = container.clientWidth;
-    const height = width * 0.5;
+    const height = container.clientHeight;
 
     canvas.width = width;
     canvas.height = height;
@@ -82,7 +82,7 @@ function drawCell(x, y, screenX, screenY, cellSize) {
     } else if (gameState.validMoves.some(move => move.x === x && move.y === y)) {
         ctx.fillStyle = "rgba(250,239,47,0.5)";
         ctx.fillRect(screenX, screenY, cellSize, cellSize);
-}
+    }
 }
 
 // Рисование юнита
@@ -244,3 +244,4 @@ export function setupCameraControls() {
         return false;
     });
 }
+
