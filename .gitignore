@@ -5,6 +5,9 @@ media/
 # IDE
 .idea/
 .vscode/
+.kilo/
+.codeassistant/
+.roomodes
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

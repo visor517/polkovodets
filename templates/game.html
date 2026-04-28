@@ -1,38 +1,45 @@
-<!DOCTYPE html>
-<html lang="ru">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Полководец - Наполеоновские войны</title>
-    <link rel="stylesheet" href="/static/css/game.css">
-</head>
-
-<body>
-    <div class="game-container">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+{% block content %}
+<div class="row h-100 mb-4">
+    <!-- Canvas (9 колонок) -->
+    <div class="col-9 d-flex flex-column">
+        <div class="game-container flex-grow-1">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+        <div class="d-flex justify-content-center gap-2 mt-3">
+            <button id="newGameButton" class="btn btn-primary">Новая игра</button>
+            <button id="endTurnButton" class="btn btn-primary">Завершить ход</button>
+        </div>
     </div>
 
-    <div class="buttons-container">
-        <button id="newGameButton" class="game-button">Новая игра</button>
-        <button id="endTurnButton" class="game-button">Завершить ход</button>
+    <!-- Правая панель (3 колонки) -->
+    <div class="col-3 d-flex flex-column">
+        <!-- Инфоблок -->
+        <div class="info-block">
+            <h5>ИНФОРМАЦИЯ</h5>
+            <div id="turnInfo"></div>
+            <div>Номер хода: <span id="turnNumberInfo"></span></div>
+            <div>Счёт: <span id="scoreInfo">0 : 0</span></div>
+            <hr>
+            <div id="selectedInfo">Кликните на юнита для выбора</div>
+        </div>
+
+        <!-- Объединённый блок чата и лога -->
+        <div class="flex-grow-1 d-flex flex-column min-h-0">
+            {% include "chat.html" %}
+        </div>
+
+        <!-- Подсказки управления -->
+        <div class="controls-hint mt-3">
+            🖱️ Правая кнопка + движения = панорамирование<br>
+            🖱️ Колесо мыши = зум<br>
+            🖱️ Левый клик = выбрать/передвинуть
+        </div>
     </div>
+</div>
+{% endblock %}
 
-    <div class="info-panel" id="infoPanel">
-        Ход: Французская армия | Зум: 1.0x
-    </div>
-
-    <div class="selected-info" id="selectedInfo">
-        Кликните на юнита для выбора
-    </div>
-
-    <div class="controls-hint">
-        🖱️ Правая кнопка + движение = панорамирование<br>
-        🖱️ Колесо мыши = зум<br>
-        🖱️ Левый клик = выбрать/передвинуть
-    </div>
-
-    <script src="/static/js/game.js" type="module"></script>
-</body>
-
-</html>
+{% block extra_scripts %}
+<script src="/static/js/game.js" type="module"></script>
+{% endblock %}
