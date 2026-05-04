@@ -41,5 +41,16 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="/static/js/game.js" type="module"></script>
+{{ game_data|json_script:"game-data" }}
+{{ unit_stats|json_script:"stats-data" }}
+<script type="module">
+    const gameData = JSON.parse(document.getElementById("game-data").textContent);
+    const unitStats = JSON.parse(document.getElementById("stats-data").textContent);
+
+    window.gameUid = "{{ game_uid|escapejs }}";
+    window.gameData = gameData;
+    window.unitStats = unitStats;
+
+    import("/static/js/game.js");
+</script>
 {% endblock %}

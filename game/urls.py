@@ -3,11 +3,10 @@ from . import views
 
 
 urlpatterns = [
-    path("", views.game_view, name="game"),
+    path("", views.lobby_view, name="lobby"),
+    path("game/<str:game_uid>/", views.game_view, name="game"),
+    path("new_game/", views.new_game, name="new_game"),
     path("api/attack/", views.make_attack, name="make_attack"),
     path("api/end_turn/", views.end_turn, name="end_turn"),
     path("api/move/", views.make_move, name="make_move"),
-    path("api/new_game/", views.new_game, name="new_game"),
-    path("api/unit_stats/", views.get_unit_stats, name="unit_stats"),
-    path("api/current_game/", views.current_game, name="current_game"),
 ]

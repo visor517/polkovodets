@@ -1,19 +1,112 @@
 from datetime import timedelta
 
-from django.shortcuts import render
+from django.db.models import Q
+
+from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from . import exceptions as err
-from .army import UNIT_STATS
-from .models import Army, Game, Unit
-from . import serializers
+from game import exceptions as err
+from game import serializers
+from game.army import UNIT_STATS
+from game.models import Army, Game, Unit
 
 
-def game_view(request):
-    """Главная страница игры"""
-    return render(request, "game.html")
+def lobby_view(request):
+    """Лобби — главная страница"""
+    waiting_games = Game.objects.filter(
+        status="waiting"
+    ).order_by("-created_at")
+    
+    context = {
+        "waiting_games": waiting_games,
+    }
+    
+    if request.user.is_authenticated:
+        my_games = Game.objects.filter(
+            Q(player1=request.user) | Q(player2=request.user)
+        ).exclude(status="finished").order_by("-created_at")[:10]
+        context["my_games"] = my_games
+    
+    return render(request, "lobby.html", context)
+
+
+def game_view(request, game_uid):
+    """Страница игры"""
+    game = get_object_or_404(Game, uid=game_uid)
+    serializer = serializers.GameSerializer(game)
+    
+    # Добавляем служебные поля
+    context = {
+        "game_uid": game_uid,
+        "game_data": serializer.data,
+        "unit_stats": UNIT_STATS,
+    }
+    
+    return render(request, "game.html", context)
+
+
+def new_game(request):
+    """
+    Создание новой игры
+
+    TODO: сделать форму для создания игры
+    """
+
+    # FIXME: Временно удаляем игры старше 3 часов
+    Game.objects.filter(created_at__lt=timezone.now() - timedelta(hours=3)).delete()
+
+    # Временно привязываем админа
+    if not request.user.is_authenticated:
+        player1 = User.objects.get(username="admin")
+    else:
+        player1 = request.user
+    
+    game = Game.objects.create(
+        player1=player1,
+        status="waiting",
+        first_side=Army.RUSSIAN,
+        second_side=Army.FRENCH,
+    )
+    
+    # Начальная расстановка юнитов
+    initial_units = [
+        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 4},
+        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 5},
+        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 6},
+        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 7},
+        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 2, "y": 4},
+        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 2, "y": 5},
+        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 2, "y": 6},
+        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 2, "y": 7},
+        {"unit_type": "artillery", "army": Army.RUSSIAN, "x": 3, "y": 5},
+        {"unit_type": "artillery", "army": Army.RUSSIAN, "x": 3, "y": 6},
+        {"unit_type": "cuirassier", "army": Army.RUSSIAN, "x": 2, "y": 1},
+        {"unit_type": "cuirassier", "army": Army.RUSSIAN, "x": 2, "y": 2},
+        {"unit_type": "dragoon", "army": Army.RUSSIAN, "x": 2, "y": 9},
+        {"unit_type": "dragoon", "army": Army.RUSSIAN, "x": 2, "y": 10},
+
+        {"unit_type": "infantry", "army": Army.FRENCH, "x": 10, "y": 4},
+        {"unit_type": "infantry", "army": Army.FRENCH, "x": 10, "y": 5},
+        {"unit_type": "infantry", "army": Army.FRENCH, "x": 10, "y": 6},
+        {"unit_type": "infantry", "army": Army.FRENCH, "x": 10, "y": 7},
+        {"unit_type": "infantry", "army": Army.FRENCH, "x": 9, "y": 4},
+        {"unit_type": "infantry", "army": Army.FRENCH, "x": 9, "y": 5},
+        {"unit_type": "infantry", "army": Army.FRENCH, "x": 9, "y": 6},
+        {"unit_type": "infantry", "army": Army.FRENCH, "x": 9, "y": 7},
+        {"unit_type": "horse_artillery", "army": Army.FRENCH, "x": 8, "y": 5},
+        {"unit_type": "artillery", "army": Army.FRENCH, "x": 8, "y": 6},
+        {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 9, "y": 1},
+        {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 9, "y": 2},
+        {"unit_type": "hussar", "army": Army.FRENCH, "x": 9, "y": 9},
+        {"unit_type": "hussar", "army": Army.FRENCH, "x": 9, "y": 10},
+    ]
+    for unit_data in initial_units:
+        Unit.objects.create(game=game, **unit_data)
+    
+    return redirect("game", game_uid=game.uid)
 
 
 @api_view(["POST"])
@@ -157,83 +250,3 @@ def make_move(request):
     unit_serializer = serializers.UnitSerializer(unit)
     events = [{"type": "unit_updated", "unit": unit_serializer.data}]
     return Response({"success": True, "events": events})
-
-
-@api_view(["POST"])
-def new_game(request):
-    """Создание новой игры"""
-    # Временно удаляем игры старше 3 часов
-    Game.objects.filter(created_at__lt=timezone.now() - timedelta(hours=3)).delete()
-
-    game = Game.objects.create(
-        first_side=Army.RUSSIAN,
-        second_side=Army.FRENCH,
-    )
-
-    # Начальная расстановка юнитов
-    initial_units = [
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 4},
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 5},
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 6},
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 7},
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 2, "y": 4},
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 2, "y": 5},
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 2, "y": 6},
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 2, "y": 7},
-        {"unit_type": "artillery", "army": Army.RUSSIAN, "x": 3, "y": 5},
-        {"unit_type": "artillery", "army": Army.RUSSIAN, "x": 3, "y": 6},
-        {"unit_type": "cuirassier", "army": Army.RUSSIAN, "x": 2, "y": 1},
-        {"unit_type": "cuirassier", "army": Army.RUSSIAN, "x": 2, "y": 2},
-        {"unit_type": "dragoon", "army": Army.RUSSIAN, "x": 2, "y": 9},
-        {"unit_type": "dragoon", "army": Army.RUSSIAN, "x": 2, "y": 10},
-
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 10, "y": 4},
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 10, "y": 5},
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 10, "y": 6},
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 10, "y": 7},
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 9, "y": 4},
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 9, "y": 5},
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 9, "y": 6},
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 9, "y": 7},
-        {"unit_type": "horse_artillery", "army": Army.FRENCH, "x": 8, "y": 5},
-        {"unit_type": "artillery", "army": Army.FRENCH, "x": 8, "y": 6},
-        {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 9, "y": 1},
-        {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 9, "y": 2},
-        {"unit_type": "hussar", "army": Army.FRENCH, "x": 9, "y": 9},
-        {"unit_type": "hussar", "army": Army.FRENCH, "x": 9, "y": 10},
-    ]
-
-    for unit_data in initial_units:
-        Unit.objects.create(game=game, **unit_data)
-
-    # Сохраняем uid игры в сессию
-    request.session["game_uid"] = str(game.uid)
-
-    serializer = serializers.GameSerializer(game)
-    return Response({"success": True, "game": serializer.data})
-
-
-@api_view(["GET"])
-def get_unit_stats(request):
-    """Возвращает характеристики всех типов юнитов"""
-    return Response(UNIT_STATS)
-
-
-@api_view(["GET"])
-def current_game(request):
-    """Возвращает текущую игру из сессии"""
-    game_uid = request.session.get("game_uid")
-    if not game_uid:
-        raise err.NoGameUidInSession
-
-    try:
-        game = Game.objects.get(uid=game_uid)
-    except Game.DoesNotExist:
-        del request.session["game_uid"]
-        raise err.GameNotFound
-
-    serializer = serializers.GameSerializer(game)
-    return Response({
-        "success": True,
-        "game": serializer.data
-    })
