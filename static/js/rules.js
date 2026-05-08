@@ -1,15 +1,8 @@
-import { loadUnitStats } from "./api.js";
 import { CONFIG, gameState } from "./state.js";
 
 
-// типы юнитов загружаются с бека
-export let UNIT_TYPES = {};
-
-export async function initUnitStats() {
-    UNIT_TYPES = await loadUnitStats();
-    return UNIT_TYPES;
-}
-
+// типы юнитов передаются в шаблон с бека
+export let UNIT_TYPES = window.unitStats;
 
 // Получение возможных ходов для юнита
 export function getValidMoves(unit) {

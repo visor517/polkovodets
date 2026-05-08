@@ -54,10 +54,18 @@ class UnitSerializer(serializers.ModelSerializer):
 class GameSerializer(serializers.ModelSerializer):
     active_side = serializers.ReadOnlyField()
     units = serializers.SerializerMethodField()
+    status = serializers.CharField(source="get_status_display")
+    winner_display = serializers.CharField(source="get_winner_display", read_only=True)
 
     class Meta:
         model = Game
-        fields = ["uid", "first_side", "second_side", "turn_number", "active_side", "is_finished", "units"]
+        fields = [
+            "uid", "status", "created_at",
+            "player1", "player2",
+            "turn_number", "first_side", "second_side",
+            "active_side", "winner", "winner_display",
+            "units"
+        ]
 
     def get_units(self, obj):
         units_dict = {}

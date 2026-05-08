@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Полководец - Лобби{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-9">
+        <!-- Мои игры -->
+        <div class="card mb-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">🎮 Мои игры</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Игра</th>
+                                <th>Противник</th>
+                                <th>Статус</th>
+                                <th>Ваша сторона</th>
+                                <th>Ход</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for game in my_games %}
+                            <tr>
+                                <td>#{{ game.uid|slice:":8" }}</td>
+                                <td>
+                                    {% if game.player1 == request.user and game.player2 %}
+                                    {{ game.player2.username }}
+                                    {% elif game.player2 == request.user and game.player1 %}
+                                    {{ game.player1.username }}
+                                    {% else %}
+                                    Ожидание...
+                                    {% endif %}
+                                </td>
+                                <td>{{ game.get_status_display }}</td>
+                                <td>
+                                    {% if game.player1 == request.user %}
+                                    {{ game.first_side }}
+                                    {% else %}
+                                    {{ game.second_side }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if game.active_side == game.get_player_side %}
+                                    Ваш ход
+                                    {% else %}
+                                    Ожидание
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'game' game.uid %}" class="btn btn-sm btn-primary">Войти</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Нет активных игр</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Игры, ожидающие игрока -->
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">🆓 Игры, ожидающие соперника</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Игра</th>
+                                <th>Создатель</th>
+                                <th>Дата</th>
+                                <th>Сторона создателя</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for game in waiting_games %}
+                            <tr>
+                                <td>#{{ game.uid|slice:":8" }}</td>
+                                <td>{{ game.player1.username }}</td>
+                                <td>{{ game.created_at|date:"d.m.Y H:i" }}</td>
+                                <td>{{ game.first_side }}</td>
+                                <td>
+                                    <a href="{% url 'game' game.uid %}"
+                                        class="btn btn-sm btn-success">Присоединиться</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Нет доступных игр</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Кнопка новой игры -->
+        <div class="mt-4 text-center">
+            <form action="{% url 'new_game' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-lg">➕ Начать новую игру</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Правая часть — чат (заглушка) -->
+    <div class="col-3">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">💬 Общий чат</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted text-center">Чат будет доступен позже</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

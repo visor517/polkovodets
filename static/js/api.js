@@ -1,7 +1,7 @@
-import {getCookie} from "./utils.js";
-import {gameState} from "./state.js";
-import {applyEvents} from "./events.js";
-import {draw} from "./canvas.js";
+import { getCookie } from "./utils.js";
+import { gameState } from "./state.js";
+import { applyEvents } from "./events.js";
+import { draw } from "./canvas.js";
 
 
 export async function makeAttack(unitId, targetX, targetY) {
@@ -66,16 +66,6 @@ export async function makeMove(unitId, targetX, targetY) {
         gameState.clearSelection();
         draw();
     }
-}
-
-export async function loadUnitStats() {
-    const response = await fetch("/api/unit_stats/");
-    return await response.json();
-}
-
-export async function loadCurrentGame() {
-    const response = await fetch("/api/current_game/");
-    return await response.json();
 }
 
 export async function createNewGame() {
