@@ -1,6 +1,6 @@
 // Конфигурация
 export const CONFIG = {
-    worldWidth: 12,
+    worldWidth: 16,
     worldHeight: 12,
     cellSize: 80,
     minZoom: 0.3,
