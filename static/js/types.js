@@ -11,6 +11,8 @@
 /**
  * @typedef {Object} Game
  * @property {string} uid
+ * @property {number} world_width
+ * @property {number} world_height
  * @property {string} first_side
  * @property {string} second_side
  * @property {number} turn_number

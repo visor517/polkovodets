@@ -22,6 +22,8 @@ class Game(models.Model):
     uid = models.UUIDField(primary_key=True, default=uuid.uuid4)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="waiting")
     created_at = models.DateTimeField(auto_now_add=True)
+    world_width = models.IntegerField(default=16)
+    world_height = models.IntegerField(default=12)
     player1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="games_as_player1")
     player2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="games_as_player2", null=True, blank=True)
     turn_number = models.IntegerField(default=1)

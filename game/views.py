@@ -73,30 +73,27 @@ def new_game(request):
     
     # Начальная расстановка юнитов
     initial_units = [
-        # РУССКИЕ (левая сторона, оборона + подвижные отряды)
+        # РУССКИЕ (левая сторона, x = 1-2)
+        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 2},
         {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 3},
         {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 4},
         {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 5},
         {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 6},
         {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 7},
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 8},
 
+        {"unit_type": "artillery", "army": Army.RUSSIAN, "x": 2, "y": 3},
         {"unit_type": "artillery", "army": Army.RUSSIAN, "x": 2, "y": 4},
         {"unit_type": "artillery", "army": Army.RUSSIAN, "x": 2, "y": 5},
-        {"unit_type": "artillery", "army": Army.RUSSIAN, "x": 2, "y": 6},
-        {"unit_type": "artillery", "army": Army.RUSSIAN, "x": 2, "y": 7},
 
-        {"unit_type": "cuirassier", "army": Army.RUSSIAN, "x": 3, "y": 2},
-        {"unit_type": "cuirassier", "army": Army.RUSSIAN, "x": 3, "y": 3},
-        {"unit_type": "dragoon", "army": Army.RUSSIAN, "x": 3, "y": 9},
-        {"unit_type": "dragoon", "army": Army.RUSSIAN, "x": 3, "y": 10},
+        {"unit_type": "cuirassier", "army": Army.RUSSIAN, "x": 2, "y": 1},
+        {"unit_type": "cuirassier", "army": Army.RUSSIAN, "x": 2, "y": 2},
+        {"unit_type": "dragoon", "army": Army.RUSSIAN, "x": 2, "y": 8},
+        {"unit_type": "dragoon", "army": Army.RUSSIAN, "x": 2, "y": 9},
 
-        {"unit_type": "hussar", "army": Army.RUSSIAN, "x": 2, "y": 1},
-        {"unit_type": "hussar", "army": Army.RUSSIAN, "x": 2, "y": 2},
-        {"unit_type": "hussar", "army": Army.RUSSIAN, "x": 2, "y": 10},
-        {"unit_type": "hussar", "army": Army.RUSSIAN, "x": 2, "y": 11},
+        {"unit_type": "hussar", "army": Army.RUSSIAN, "x": 1, "y": 1},
+        {"unit_type": "hussar", "army": Army.RUSSIAN, "x": 1, "y": 8},
 
-        # ФРАНЦУЗЫ (правая сторона, более рассредоточенные)
+        # ФРАНЦУЗЫ (правая сторона, x = 13-14)
         {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 4},
         {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 5},
         {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 6},
@@ -109,20 +106,18 @@ def new_game(request):
         {"unit_type": "infantry", "army": Army.FRENCH, "x": 13, "y": 7},
         {"unit_type": "infantry", "army": Army.FRENCH, "x": 13, "y": 8},
 
+        {"unit_type": "artillery", "army": Army.FRENCH, "x": 12, "y": 4},
         {"unit_type": "artillery", "army": Army.FRENCH, "x": 12, "y": 5},
         {"unit_type": "artillery", "army": Army.FRENCH, "x": 12, "y": 6},
-        {"unit_type": "artillery", "army": Army.FRENCH, "x": 11, "y": 4},
-        {"unit_type": "artillery", "army": Army.FRENCH, "x": 11, "y": 7},
 
-        {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 15, "y": 1},
-        {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 15, "y": 2},
-        {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 15, "y": 10},
-        {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 15, "y": 11},
+        {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 14, "y": 1},
+        {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 14, "y": 2},
+        {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 14, "y": 9},
+        {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 14, "y": 10},
 
-        {"unit_type": "hussar", "army": Army.FRENCH, "x": 14, "y": 2},
-        {"unit_type": "hussar", "army": Army.FRENCH, "x": 14, "y": 9},
-        {"unit_type": "dragoon", "army": Army.FRENCH, "x": 14, "y": 10},
-        {"unit_type": "dragoon", "army": Army.FRENCH, "x": 14, "y": 11},
+        {"unit_type": "hussar", "army": Army.FRENCH, "x": 13, "y": 2},
+        {"unit_type": "hussar", "army": Army.FRENCH, "x": 13, "y": 9},
+        {"unit_type": "dragoon", "army": Army.FRENCH, "x": 13, "y": 10},
     ]
     for unit_data in initial_units:
         Unit.objects.create(game=game, **unit_data)

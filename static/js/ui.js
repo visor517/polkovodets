@@ -1,5 +1,4 @@
 import { createNewGame, endTurn } from "./api.js";
-import { gameState } from "./state.js";
 import { handleGameStart } from "./handlers.js";
 import { applyEvents } from "./events.js";
 

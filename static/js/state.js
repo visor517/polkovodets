@@ -1,7 +1,5 @@
 // Конфигурация
 export const CONFIG = {
-    worldWidth: 16,
-    worldHeight: 12,
     cellSize: 80,
     minZoom: 0.3,
     maxZoom: 2.0
@@ -9,14 +7,15 @@ export const CONFIG = {
 
 // Игровое состояние
 export class GameState {
-    constructor(gameUid, firstSide, secondSide, turnNumber = 1, activeSide, units = {}) {
-        this.gameUid = gameUid;
-        this.firstSide = firstSide;
-        this.secondSide = secondSide;
-        this.turnNumber = turnNumber;
-        this.activeSide = activeSide;
-        /** @type {Object.<number, Unit>} */
-        this.units = units;
+    constructor() {
+        this.gameUid = null;
+        this.worldWidth = 16;
+        this.worldHeight = 12;
+        this.firstSide = null;
+        this.secondSide = null;
+        this.turnNumber = 1;
+        this.activeSide = null;
+        this.units = {};
         this.selectedUnitId = null;
         this.validMoves = [];
         this.validAttacks = [];
@@ -24,6 +23,8 @@ export class GameState {
 
     reset(game) {
         this.gameUid = game.uid;
+        this.worldWidth = game.world_width;
+        this.worldHeight = game.world_height;
         this.firstSide = game.first_side;
         this.secondSide = game.second_side;
         this.turnNumber = game.turn_number;

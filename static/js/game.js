@@ -1,4 +1,4 @@
-import { CONFIG } from "./state.js";
+import { CONFIG, gameState } from "./state.js";
 import { initCanvas, draw, loadImages, setupCameraControls, canvas, camera } from "./canvas.js";
 import { handleGameStart } from "./handlers.js";
 import { setupButtons } from "./ui.js";
@@ -6,10 +6,10 @@ import { setupButtons } from "./ui.js";
 
 // Инициализация игры
 async function init() {
-    console.log("запускаем скрипт")
+
     // Инициируем canvas
     initCanvas();
-    console.log("инициировали канвас")
+
     // Загружаем изображения
     await loadImages();
 
@@ -17,8 +17,8 @@ async function init() {
     handleGameStart(window.gameData);
 
     // Настраиваем начальную позицию камеры, чтобы видеть всё поле
-    const totalWidth = CONFIG.cellSize * CONFIG.worldWidth;
-    const totalHeight = CONFIG.cellSize * CONFIG.worldHeight;
+    const totalWidth = CONFIG.cellSize * gameState.worldWidth;
+    const totalHeight = CONFIG.cellSize * gameState.worldHeight;
     camera.zoom = Math.min(canvas.width / totalWidth, canvas.height / totalHeight) * 0.9;
     camera.offsetX = (canvas.width - totalWidth * camera.zoom) / 2;
     camera.offsetY = (canvas.height - totalHeight * camera.zoom) / 2;

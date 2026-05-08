@@ -1,4 +1,4 @@
-import { CONFIG, gameState } from "./state.js";
+import { gameState } from "./state.js";
 
 
 // типы юнитов передаются в шаблон с бека
@@ -22,7 +22,7 @@ export function getValidMoves(unit) {
             const newX = unit.x + dx * step;
             const newY = unit.y + dy * step;
 
-            if (newX < 0 || newX >= CONFIG.worldWidth || newY < 0 || newY >= CONFIG.worldHeight) break;
+            if (newX < 0 || newX >= gameState.worldWidth || newY < 0 || newY >= gameState.worldHeight) break;
 
             const targetUnit = Object.values(gameState.units).find(u => u.x === newX && u.y === newY);
             if (targetUnit) break;  // любой юнит блокирует
@@ -51,7 +51,7 @@ export function getValidAttacks(unit) {
             const newX = unit.x + dx * step;
             const newY = unit.y + dy * step;
 
-            if (newX < 0 || newX >= CONFIG.worldWidth || newY < 0 || newY >= CONFIG.worldHeight) break;
+            if (newX < 0 || newX >= gameState.worldWidth || newY < 0 || newY >= gameState.worldHeight) break;
 
             const targetUnit = Object.values(gameState.units).find(u => u.x === newX && u.y === newY);
 

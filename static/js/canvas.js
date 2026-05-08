@@ -27,11 +27,17 @@ function resizeCanvas() {
 
 export function initCanvas() {
     canvas = document.getElementById("gameCanvas");
-    resizeCanvas();
     ctx = canvas.getContext("2d");
 
+    // Устанавливаем реальные размеры один раз при инициализации
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+
     window.addEventListener("resize", () => {
-        resizeCanvas();
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
         draw();
     });
 }
@@ -131,9 +137,9 @@ export function draw() {
 
     // Вычисляем видимую область
     const startCol = Math.max(0, Math.floor(-camera.offsetX / cellSize));
-    const endCol = Math.min(CONFIG.worldWidth, Math.ceil((canvas.width - camera.offsetX) / cellSize) + 1);
+    const endCol = Math.min(gameState.worldWidth, Math.ceil((canvas.width - camera.offsetX) / cellSize) + 1);
     const startRow = Math.max(0, Math.floor(-camera.offsetY / cellSize));
-    const endRow = Math.min(CONFIG.worldHeight, Math.ceil((canvas.height - camera.offsetY) / cellSize) + 1);
+    const endRow = Math.min(gameState.worldHeight, Math.ceil((canvas.height - camera.offsetY) / cellSize) + 1);
 
     // Очищаем canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -206,8 +212,8 @@ export function setupCameraControls() {
             camera.offsetY = e.clientY - camera.panStartY;
 
             // Ограничиваем панорамирование
-            const maxOffsetX = CONFIG.cellSize * camera.zoom * CONFIG.worldWidth - canvas.width;
-            const maxOffsetY = CONFIG.cellSize * camera.zoom * CONFIG.worldHeight - canvas.height;
+            const maxOffsetX = CONFIG.cellSize * camera.zoom * gameState.worldWidth - canvas.width;
+            const maxOffsetY = CONFIG.cellSize * camera.zoom * gameState.worldHeight - canvas.height;
             camera.offsetX = Math.min(0, Math.max(-maxOffsetX, camera.offsetX));
             camera.offsetY = Math.min(0, Math.max(-maxOffsetY, camera.offsetY));
 
@@ -234,7 +240,7 @@ export function setupCameraControls() {
         const worldX = Math.floor((mouseX - camera.offsetX) / (CONFIG.cellSize * camera.zoom));
         const worldY = Math.floor((mouseY - camera.offsetY) / (CONFIG.cellSize * camera.zoom));
 
-        if (worldX >= 0 && worldX < CONFIG.worldWidth && worldY >= 0 && worldY < CONFIG.worldHeight) {
+        if (worldX >= 0 && worldX < gameState.worldWidth && worldY >= 0 && worldY < gameState.worldHeight) {
             handleCellClick(worldX, worldY);
         }
     });
