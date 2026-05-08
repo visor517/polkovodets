@@ -6,10 +6,10 @@ import { setupButtons } from "./ui.js";
 
 // Инициализация игры
 async function init() {
-
+    console.log("запускаем скрипт")
     // Инициируем canvas
     initCanvas();
-
+    console.log("инициировали канвас")
     // Загружаем изображения
     await loadImages();
 

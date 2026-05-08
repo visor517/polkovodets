@@ -84,7 +84,7 @@ export function handleCellClick(worldX, worldY) {
 
 // Обработка старта игры
 export function handleGameStart(game) {
-    console.log("🎮 Новая игра начата", game.uid);
+    console.log("Загружаем игру", game.uid);
     gameState.reset(game);
     draw();
     const sideName = game.active_side === "russian" ? "русских" : "французов";
