@@ -24,11 +24,15 @@ class Game(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     world_width = models.IntegerField(default=16)
     world_height = models.IntegerField(default=12)
+    first_side = models.CharField(max_length=10, choices=Army.choices, default=Army.RUSSIAN)
+    second_side = models.CharField(max_length=10, choices=Army.choices, default=Army.FRENCH)
+    side1_mr = models.IntegerField(default=100, verbose_name="Мобилизационный ресурс стороны 1")
+    side2_mr = models.IntegerField(default=100, verbose_name="Мобилизационный ресурс стороны 2")
     player1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="games_as_player1")
     player2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name="games_as_player2", null=True, blank=True)
     turn_number = models.IntegerField(default=1)
-    first_side = models.CharField(max_length=10, choices=Army.choices, default=Army.RUSSIAN)
-    second_side = models.CharField(max_length=10, choices=Army.choices, default=Army.FRENCH)
+    side1_score = models.IntegerField(default=0, verbose_name="Очки стороны 1")
+    side2_score = models.IntegerField(default=0, verbose_name="Очки стороны 2")
     winner = models.CharField(max_length=10, choices=Army.choices, blank=True, null=True)
 
     @property
