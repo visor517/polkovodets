@@ -16,8 +16,7 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="/">⚔️ ПОЛКОВОДЕЦ</a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="#">Правила</a>
-                <a class="nav-link" href="#">Формирование</a>
+                <a class="nav-link" href="{% url 'rules' %}">Правила</a>
                 <a class="nav-link" href="#">Профиль</a>
                 {% if user.is_authenticated %}
                     <span class="nav-link text-light">👤 {{ user.username }}</span>
@@ -32,12 +31,13 @@
         </div>
     </nav>
 
-    <div class="container-fluid flex-grow-1 d-flex flex-column py-3" style="min-height: 0;">
-        {% block content %}{% endblock %}
-    </div>
+    <main class="flex-grow-1">
+        <div class="container-fluid py-3 h-100">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
 
-    <!-- Подвал -->
-    <footer class="footer py-3 bg-dark border-top mt-auto">
+    <footer class="footer py-3 bg-dark border-top">
         <div class="container-fluid text-end">
             <span class="text-light">© 2026 Полководец</span>
         </div>

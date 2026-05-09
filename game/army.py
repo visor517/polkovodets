@@ -12,6 +12,45 @@ UNIT_STATS = {
             "russian": "/static/images/rus_infantry.png",
         }
     },
+    "grenadier": {
+        "name": "Гренадёры",
+        "move": {"cross": 1, "diag": 1},
+        "attack": {"cross": 1, "diag": 1},
+        "charges": True,
+        "icon": "Гр️",
+        "cost": 2,
+        "cross_country": False,
+        "images": {
+            "french": "/static/images/fr_grenadier.png",
+            "russian": "/static/images/rus_grenadier.png",
+        }
+    },
+    "huntsman": {
+        "name": "Егеря",
+        "move": {"cross": 1, "diag": 1},
+        "attack": {"cross": 0, "diag": 1},
+        "charges": True,
+        "icon": "Ег️",
+        "cost": 2,
+        "cross_country": False,
+        "images": {
+            "french": "/static/images/fr_huntsman.png",
+            "russian": "/static/images/rus_huntsman.png",
+        }
+    },
+    "guardsman": {
+        "name": "Гренадёры",
+        "move": {"cross": 1, "diag": 1},
+        "attack": {"cross": 1, "diag": 1},
+        "charges": True,
+        "icon": "Гв️",
+        "cost": 2.5,
+        "cross_country": False,
+        "images": {
+            "french": "/static/images/fr_guardsman.png",
+            "russian": "/static/images/rus_guardsman.png",
+        }
+    },
     "hussar": {
         "name": "Гусары",
         "move": {"cross": 0, "diag": 3},

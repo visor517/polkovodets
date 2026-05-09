@@ -125,6 +125,11 @@ def new_game(request):
     return redirect("game", game_uid=game.uid)
 
 
+def rules_view(request):
+    """Страница правил"""
+    return render(request, "rules.html")
+
+
 @api_view(["POST"])
 def end_turn(request):
     """Завершение хода"""

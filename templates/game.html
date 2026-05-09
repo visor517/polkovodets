@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row flex-grow-1" style="min-height: 0;">
+<div class="row h-100">
     <!-- Canvas (9 колонок) -->
-    <div class="col-9 d-flex flex-column" style="min-height: 0;">
-        <div class="game-container" style="min-height: 0;">
+    <div class="col-9 d-flex flex-column h-100">
+        <div class="game-container flex-grow-1" style="min-height: 0;">
             <canvas id="gameCanvas"></canvas>
         </div>
-        <div class="mt-2 text-center">
+        <div class="d-flex justify-content-center gap-2 mt-2 flex-shrink-0">
             <button id="endTurnButton" class="btn btn-primary">Завершить ход</button>
         </div>
     </div>
 
     <!-- Правая панель (3 колонки) -->
-    <div class="col-3 d-flex flex-column" style="min-height: 0;">
+    <div class="col-3 d-flex flex-column h-100">
         <!-- Инфоблок -->
         <div class="info-block flex-shrink-0">
             <h5>ИНФОРМАЦИЯ</h5>
@@ -25,7 +25,7 @@
         </div>
 
         <!-- Объединённый блок чата и лога -->
-        <div class="flex-grow-1" style="min-height: 0;">
+        <div class="flex-grow-1 d-flex flex-column" style="min-height: 0;">
             {% include "chat.html" %}
         </div>
 
