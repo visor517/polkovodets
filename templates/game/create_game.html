@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Создание игры{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">🎮 Создание новой игры</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <h6 class="mb-3">Общие настройки</h6>
+                    {{ form.name|as_crispy_field }}
+                    {{ form.game_type|as_crispy_field }}
+
+                    <hr>
+                    <h6 class="mb-3">Первый игрок (вы)</h6>
+                    {{ form.player1_mr|as_crispy_field }}
+                    {{ form.player1_side|as_crispy_field }}
+
+                    <hr>
+                    <h6 class="mb-3">Второй игрок</h6>
+                    {{ form.player2_mr|as_crispy_field }}
+                    {{ form.player2_side|as_crispy_field }}
+                    {{ form.player2_identifier|as_crispy_field }}
+
+                    <hr>
+                    {{ form.first_turn|as_crispy_field }}
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">Создать игру</button>
+                        <a href="{% url 'lobby' %}" class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

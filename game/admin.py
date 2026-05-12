@@ -4,21 +4,23 @@ from game.models import Game, Unit
 
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
-    list_display = ("uid", "status", "created_at", "turn_number", "first_side", "second_side", "winner")
-    list_filter = ("status", "first_side", "second_side", "winner", "created_at")
-    search_fields = ("uid",)
-    readonly_fields = ("uid", "created_at")
-    ordering = ("-created_at",)
-    
+    list_display = ("id", "name", "uid", "status", "player1", "player1_side", "player2", "player2_side",
+                    "round_number", "active_side")
+    list_filter = ("status", "player1_side", "player2_side", "winner", "created_at")
+    search_fields = ("uid", "name")
+    readonly_fields = ("uid", "created_at", "round_number", "active_side")
+    ordering = ("-id",)
+
     fieldsets = (
         (None, {
-            "fields": ("uid", "status", "created_at")
+            "fields": ("uid", "name", "status", "created_at")
         }),
         ("Игроки", {
-            "fields": ("player1", "player2")
+            "fields": ("player1", "player1_side", "player1_mr", "player1_score",
+                       "player2", "player2_side", "player2_mr", "player2_score")
         }),
-        ("Игровая информация", {
-            "fields": ("turn_number", "first_side", "second_side", "winner")
+        ("Игровое состояние", {
+            "fields": ("move_number", "round_number", "active_side", "winner", "is_finished")
         }),
     )
 

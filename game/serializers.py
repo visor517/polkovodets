@@ -37,7 +37,7 @@ class UnitActionSerializer(serializers.Serializer):
         if unit.army != game.active_side:
             raise err.WrongTurn()
 
-        if unit.last_used_turn == game.turn_number:
+        if unit.last_used_turn == game.move_number:
             raise err.UnitAlreadyActed()
 
         data["game"] = game
@@ -56,14 +56,15 @@ class GameSerializer(serializers.ModelSerializer):
     units = serializers.SerializerMethodField()
     status = serializers.CharField(source="get_status_display")
     winner_display = serializers.CharField(source="get_winner_display", read_only=True)
+    round_number = serializers.ReadOnlyField()
 
     class Meta:
         model = Game
         fields = [
-            "uid", "status", "created_at", "world_width", "world_height",
-            "player1", "player2",
-            "turn_number", "first_side", "second_side",
-            "active_side", "winner", "winner_display",
+            "uid", "name", "status", "created_at", "world_width", "world_height",
+            "player1", "player2", "player1_side", "player2_side", "player1_mr", "player2_mr",
+            "move_number", "round_number", "active_side",
+            "player1_score", "player2_score", "winner_display", "is_finished",
             "units"
         ]
 

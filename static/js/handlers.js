@@ -26,7 +26,7 @@ export function handleCellClick(worldX, worldY) {
     // Если клик на своём юните
     if (clickedUnit && clickedUnit.army === gameState.activeSide) {
         // Проверяем, не действовал ли юнит в этом ходу
-        if (clickedUnit.last_used_turn === gameState.turnNumber) {
+        if (clickedUnit.last_used_turn === gameState.moveNumber) {
             document.getElementById("selectedInfo").innerHTML =
                 `${UNIT_TYPES[clickedUnit.unit_type].name} уже действовал в этом ходу`;
             return;

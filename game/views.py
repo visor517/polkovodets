@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.db.models import Q
 
-from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
 from rest_framework.decorators import api_view
@@ -11,26 +11,118 @@ from rest_framework.response import Response
 from game import exceptions as err
 from game import serializers
 from game.army import UNIT_STATS
+from game.forms import CreateGameForm
 from game.models import Army, Game, Unit
 
 
 def lobby_view(request):
     """Лобби — главная страница"""
-    waiting_games = Game.objects.filter(
-        status="waiting"
-    ).order_by("-created_at")
-    
-    context = {
-        "waiting_games": waiting_games,
-    }
-    
+
     if request.user.is_authenticated:
-        my_games = Game.objects.filter(
-            Q(player1=request.user) | Q(player2=request.user)
-        ).exclude(status="finished").order_by("-created_at")[:10]
-        context["my_games"] = my_games
+        my_games_filter = Q(player1=request.user) | Q(player2=request.user)
+        context = {
+            "my_games": Game.objects.filter(my_games_filter).order_by("-created_at"),
+            "waiting_games": Game.objects.filter(status="waiting").exclude(my_games_filter).order_by("-created_at"),
+        }
     
+    else:
+        context = {
+            "waiting_games": Game.objects.filter(status="waiting").order_by("-created_at"),
+        }
+
     return render(request, "lobby.html", context)
+
+
+@login_required
+def create_game_view(request):
+    """Создание игры"""
+
+    if request.method == "GET":
+        # FIXME: Временно удаляем игры старше 24 часов
+        Game.objects.filter(created_at__lt=timezone.now() - timedelta(hours=24)).delete()
+
+        return render(request, "game/create_game.html", {"form": CreateGameForm()})
+
+    elif request.method == "POST":
+        form = CreateGameForm(request.POST)
+        if not form.is_valid():
+            return render(request, "game/create_game.html", {"form": form})
+
+        data = form.cleaned_data
+
+        player2 = data.get("player2")
+        status = data.get("status")
+
+        # Определяем, кто какими войсками играет
+        first_side = data["player1_side"] if data["first_turn"] == "player1" else data["player2_side"]
+        second_side = data["player2_side"] if data["first_turn"] == "player1" else data["player1_side"]
+
+        # Создаём игру
+        game = Game.objects.create(
+            name=data["name"],
+            player1=request.user,
+            player2=player2,
+            status=status,
+            player1_side=data["player1_side"],
+            player2_side=data["player2_side"],
+            is_player1_first=(data["first_turn"] == "player1"),
+            player1_mr=data["player1_mr"],
+            player2_mr=data["player2_mr"],
+            move_number=1
+        )
+
+        # Начальная расстановка юнитов временно
+        initial_units = [
+            # Русские (левая сторона)
+            {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 2},
+            {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 3},
+            {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 4},
+            {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 2, "y": 2},
+            {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 2, "y": 3},
+            {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 2, "y": 4},
+            {"unit_type": "grenadier", "army": Army.RUSSIAN, "x": 1, "y": 5},
+            {"unit_type": "grenadier", "army": Army.RUSSIAN, "x": 2, "y": 5},
+            {"unit_type": "huntsman", "army": Army.RUSSIAN, "x": 2, "y": 7},
+            {"unit_type": "huntsman", "army": Army.RUSSIAN, "x": 2, "y": 8},
+            {"unit_type": "huntsman", "army": Army.RUSSIAN, "x": 2, "y": 9},
+            {"unit_type": "huntsman", "army": Army.RUSSIAN, "x": 2, "y": 10},
+
+            {"unit_type": "artillery", "army": Army.RUSSIAN, "x": 3, "y": 5},
+            {"unit_type": "artillery", "army": Army.RUSSIAN, "x": 3, "y": 6},
+
+            {"unit_type": "hussar", "army": Army.RUSSIAN, "x": 4, "y": 10},
+            {"unit_type": "hussar", "army": Army.RUSSIAN, "x": 4, "y": 11},
+            {"unit_type": "cuirassier", "army": Army.RUSSIAN, "x": 4, "y": 1},
+            {"unit_type": "cuirassier", "army": Army.RUSSIAN, "x": 4, "y": 2},
+
+            # Французы (правая сторона)
+            {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 2},
+            {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 3},
+            {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 4},
+            {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 5},
+            {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 6},
+            {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 7},
+            {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 8},
+            {"unit_type": "huntsman", "army": Army.FRENCH, "x": 13, "y": 2},
+            {"unit_type": "huntsman", "army": Army.FRENCH, "x": 13, "y": 3},
+            {"unit_type": "huntsman", "army": Army.FRENCH, "x": 13, "y": 4},
+            {"unit_type": "huntsman", "army": Army.FRENCH, "x": 13, "y": 5},
+            {"unit_type": "huntsman", "army": Army.FRENCH, "x": 13, "y": 6},
+            {"unit_type": "huntsman", "army": Army.FRENCH, "x": 13, "y": 7},
+            {"unit_type": "huntsman", "army": Army.FRENCH, "x": 13, "y": 8},
+
+            {"unit_type": "artillery", "army": Army.FRENCH, "x": 12, "y": 5},
+            {"unit_type": "artillery", "army": Army.FRENCH, "x": 12, "y": 6},
+
+            {"unit_type": "ulan", "army": Army.FRENCH, "x": 14, "y": 10},
+            {"unit_type": "ulan", "army": Army.FRENCH, "x": 14, "y": 11},
+            {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 13, "y": 10},
+            {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 13, "y": 11},
+        ]
+        for unit_data in initial_units:
+            Unit.objects.create(game=game, **unit_data)
+
+        return redirect("game", game_uid=game.uid)
 
 
 def game_view(request, game_uid):
@@ -48,87 +140,6 @@ def game_view(request, game_uid):
     return render(request, "game.html", context)
 
 
-def new_game(request):
-    """
-    Создание новой игры
-
-    TODO: сделать форму для создания игры
-    """
-
-    # FIXME: Временно удаляем игры старше 3 часов
-    Game.objects.filter(created_at__lt=timezone.now() - timedelta(hours=3)).delete()
-
-    # Временно привязываем админа
-    if not request.user.is_authenticated:
-        player1 = User.objects.get(username="admin")
-    else:
-        player1 = request.user
-    
-    game = Game.objects.create(
-        player1=player1,
-        status="waiting",
-        first_side=Army.RUSSIAN,
-        second_side=Army.FRENCH,
-    )
-    
-    # Начальная расстановка юнитов
-    initial_units = [
-        # Русские (левая сторона)
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 2},  # 1
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 3},  # 1
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 4},  # 1
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 5},  # 1
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 6},  # 1
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 7},  # 1
-        {"unit_type": "infantry", "army": Army.RUSSIAN, "x": 1, "y": 8},  # 1
-        {"unit_type": "grenadier", "army": Army.RUSSIAN, "x": 1, "y": 9},  # 2
-
-        {"unit_type": "huntsman", "army": Army.RUSSIAN, "x": 2, "y": 2},  # 2
-        {"unit_type": "huntsman", "army": Army.RUSSIAN, "x": 2, "y": 3},  # 2
-        {"unit_type": "huntsman", "army": Army.RUSSIAN, "x": 2, "y": 4},  # 2
-        {"unit_type": "huntsman", "army": Army.RUSSIAN, "x": 2, "y": 5},  # 2
-
-        {"unit_type": "artillery", "army": Army.RUSSIAN, "x": 3, "y": 4},  # 10
-        {"unit_type": "artillery", "army": Army.RUSSIAN, "x": 3, "y": 5},  # 10
-
-        {"unit_type": "dragoon", "army": Army.RUSSIAN, "x": 0, "y": 1},  # 3
-        {"unit_type": "dragoon", "army": Army.RUSSIAN, "x": 0, "y": 2},  # 3
-        {"unit_type": "hussar", "army": Army.RUSSIAN, "x": 0, "y": 8},  # 3
-        {"unit_type": "hussar", "army": Army.RUSSIAN, "x": 0, "y": 9},  # 3
-        {"unit_type": "cuirassier", "army": Army.RUSSIAN, "x": 0, "y": 4},  # 4
-        {"unit_type": "cuirassier", "army": Army.RUSSIAN, "x": 0, "y": 5},  # 4
-
-        # Французы (правая сторона)
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 2},  # 1
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 3},  # 1
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 4},  # 1
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 5},  # 1
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 6},  # 1
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 7},  # 1
-        {"unit_type": "infantry", "army": Army.FRENCH, "x": 14, "y": 8},  # 1
-        {"unit_type": "grenadier", "army": Army.FRENCH, "x": 14, "y": 9},  # 2
-
-        {"unit_type": "huntsman", "army": Army.FRENCH, "x": 13, "y": 2},  # 2
-        {"unit_type": "huntsman", "army": Army.FRENCH, "x": 13, "y": 3},  # 2
-        {"unit_type": "huntsman", "army": Army.FRENCH, "x": 13, "y": 4},  # 2
-        {"unit_type": "huntsman", "army": Army.FRENCH, "x": 13, "y": 5},  # 2
-
-        {"unit_type": "artillery", "army": Army.FRENCH, "x": 12, "y": 4},  # 10
-        {"unit_type": "artillery", "army": Army.FRENCH, "x": 12, "y": 5},  # 10
-
-        {"unit_type": "dragoon", "army": Army.FRENCH, "x": 15, "y": 1},  # 3
-        {"unit_type": "dragoon", "army": Army.FRENCH, "x": 15, "y": 2},  # 3
-        {"unit_type": "hussar", "army": Army.FRENCH, "x": 15, "y": 8},  # 3
-        {"unit_type": "hussar", "army": Army.FRENCH, "x": 15, "y": 9},  # 3
-        {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 15, "y": 4},  # 4
-        {"unit_type": "cuirassier", "army": Army.FRENCH, "x": 15, "y": 5},  # 4
-    ]
-    for unit_data in initial_units:
-        Unit.objects.create(game=game, **unit_data)
-    
-    return redirect("game", game_uid=game.uid)
-
-
 def rules_view(request):
     """Страница правил"""
     return render(request, "rules.html")
@@ -142,12 +153,13 @@ def end_turn(request):
 
     game = serializer.validated_data["game"]
 
-    game.turn_number += 1
+    game.move_number += 1
     game.save()
 
     events = [{
-        "type": "turn_change",
-        "turn_number": game.turn_number,
+        "type": "round_change",
+        "move_number": game.move_number,
+        "round_number": game.round_number,
         "active_side": game.active_side,
     }]
     return Response({
@@ -202,10 +214,18 @@ def make_attack(request):
     if not target_unit or target_unit.army == unit.army:
         return err.InvalidTarget
 
-    events = []
-
     # Уничтожаем врага
-    events.append({"type": "destroy", "unit_id": target_unit.id})
+    target_cost = UNIT_STATS[target_unit.unit_type]["cost"]
+    if target_unit.army == game.player1_side:
+        game.player2_score += target_cost
+    else:
+        game.player1_score += target_cost
+
+    events = [
+        {"type": "destroy", "unit_id": target_unit.id},
+        {"type": "score_change", "player1_score": game.player1_score, "player2_score": game.player2_score},
+    ]
+    game.save()
     target_unit.delete()
 
     # Проверка конца игры
@@ -217,7 +237,7 @@ def make_attack(request):
     if UNIT_STATS[unit.unit_type]["charges"]:
         unit.x = to_x
         unit.y = to_y
-    unit.last_used_turn = game.turn_number
+    unit.last_used_turn = game.move_number
     unit.save()
     unit_serializer = serializers.UnitSerializer(unit)
     events.append({"type": "unit_updated", "unit": unit_serializer.data})
@@ -269,7 +289,7 @@ def make_move(request):
 
     unit.x = to_x
     unit.y = to_y
-    unit.last_used_turn = game.turn_number
+    unit.last_used_turn = game.move_number
     unit.save()
 
     unit_serializer = serializers.UnitSerializer(unit)

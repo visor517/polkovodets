@@ -13,9 +13,12 @@
  * @property {string} uid
  * @property {number} world_width
  * @property {number} world_height
- * @property {string} first_side
- * @property {string} second_side
- * @property {number} turn_number
+ * @property {string} player1_side
+ * @property {string} player2_side
+ * @property {number} player1_score
+ * @property {number} player2_score
+ * @property {number} move_number
+ * @property {number} round_number
  * @property {string} active_side
  * @property {boolean} is_finished
  * @property {Object.<number, Unit>} units

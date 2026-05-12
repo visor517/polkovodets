@@ -11,11 +11,15 @@ export function applyEvents(events) {
             case "destroy":
                 delete gameState.units[event.unit_id];
                 break;
-            case "turn_change":
-                gameState.turnNumber = event.turn_number;
+            case "score_change":
+                gameState.player1Score = event.player1_score
+                gameState.player2Score = event.player2_score
+                break;
+            case "round_change":
+                gameState.moveNumber = event.move_number;
+                gameState.roundNumber = event.round_number
                 gameState.activeSide = event.active_side;
                 gameState.clearSelection();
-                // Очищаем сообщение о выбранном юните
                 document.getElementById("selectedInfo").innerHTML = "Кликните на юнита для выбора";
                 break;
             case "game_over":

@@ -14,17 +14,6 @@ export let camera = {
     panStartY: 0
 };
 
-function resizeCanvas() {
-    const container = canvas.parentElement;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-
-    canvas.width = width;
-    canvas.height = height;
-
-    return { width, height };
-}
-
 export function initCanvas() {
     canvas = document.getElementById("gameCanvas");
     ctx = canvas.getContext("2d");
@@ -97,7 +86,7 @@ function drawUnit(unit, screenX, screenY, cellSize) {
     const img = imagePath ? images[imagePath] : null;
 
     // Использованный юнит прозрачнее
-    const isUsed = (unit.last_used_turn === gameState.turnNumber && unit.army === gameState.activeSide);
+    const isUsed = (unit.last_used_turn === gameState.moveNumber && unit.army === gameState.activeSide);
     if (isUsed) ctx.globalAlpha = 0.7;
 
     if (img && img.complete && img.naturalWidth > 0) {
@@ -168,7 +157,8 @@ export function draw() {
 
     // Обновляем информационную панель
     document.getElementById("turnInfo").innerHTML = `Ходит ${gameState.activeSide === "french" ? "Французская армия" : "Русская армия"}`;
-    document.getElementById("turnNumberInfo").innerHTML = Math.ceil(gameState.turnNumber / 2).toString();
+    document.getElementById("roundNumberInfo").innerHTML = gameState.roundNumber;
+    document.getElementById("scoreInfo").innerHTML = `${gameState.player1Score} : ${gameState.player2Score}`;
 }
 
 // Настройка управления камерой
