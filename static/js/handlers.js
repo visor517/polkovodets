@@ -87,6 +87,6 @@ export function handleGameStart(game) {
     console.log("Загружаем игру", game.uid);
     gameState.reset(game);
     draw();
-    const sideName = game.active_side === "russian" ? "русских" : "французов";
-    document.getElementById("selectedInfo").innerHTML = `Новая игра начата. Ход ${sideName}`;
+    const sideName = game.active_side === "russian" ? "Русская армия" : "Французская армия";
+    document.getElementById("selectedInfo").innerHTML = `Новая игра начата. Ходит ${sideName}`;
 }
