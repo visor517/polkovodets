@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.db.models import Q
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
@@ -138,6 +139,21 @@ def game_view(request, game_uid):
     }
     
     return render(request, "game.html", context)
+
+
+@login_required
+def join_game_view(request, game_uid):
+    game = get_object_or_404(Game, uid=game_uid)
+
+    if game.player2 is not None:
+        messages.error(request, "В этой игре уже нет мест")
+        return redirect("lobby")
+
+    game.player2 = request.user
+    game.status = "active"
+    game.save()
+
+    return redirect("game", game_uid=game.uid)
 
 
 def rules_view(request):

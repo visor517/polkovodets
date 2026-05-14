@@ -5,6 +5,16 @@
 {% block content %}
 <div class="row">
     <div class="col-9">
+        <!-- Сообщения -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3 shadow bg-warning" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i>{{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
         <!-- Мои игры -->
         <div class="card mb-4">
             <div class="card-header bg-dark text-white">
@@ -119,7 +129,7 @@
                                     <span class="badge bg-warning text-dark">Ожидание игрока</span>
                                 </td>
                                 <td>
-                                    <a href="{% url 'game' game.uid %}" class="btn btn-sm btn-success">Присоединиться</a>
+                                    <a href="{% url 'join_game' game.uid %}" class="btn btn-sm btn-success">Присоединиться</a>
                                 </td>
                             </tr>
                             {% empty %}
